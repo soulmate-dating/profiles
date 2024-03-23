@@ -1,0 +1,91 @@
+syntax = "proto3";
+
+package profiles;
+option go_package = "github.com/soulmate-dating/profiles.git/internal/ports/grpc";
+
+service ProfileService {
+  rpc CreateProfile(CreateProfileRequest) returns (ProfileResponse) {}
+  rpc GetProfile(GetProfileRequest) returns (ProfileResponse) {}
+  rpc UpdateProfile(UpdateProfileRequest) returns (ProfileResponse) {}
+
+  rpc GetPrompts(GetPromptsRequest) returns (PromptsResponse) {}
+  rpc AddPrompts(AddPromptsRequest) returns (PromptsResponse) {}
+  rpc UpdatePrompt(UpdatePromptRequest) returns (SinglePromptResponse) {}
+  rpc ReorderPrompts(UpdatePromptsPositionsRequest) returns (PromptsResponse) {}
+}
+
+message PersonalInfo {
+  string first_name = 1;
+  string last_name = 2;
+  string birth_date = 3;
+  string sex = 4;
+  string preferred_partner = 5;
+  string intention = 6;
+  uint32 height = 7;
+  bool has_children = 8;
+  string family_plans = 9;
+  string location = 10;
+  string education_level = 11;
+  string drinks_alcohol = 12;
+  string smokes_cigarettes = 13;
+}
+
+message Prompt {
+  string id = 1;
+  string question = 2;
+  string answer = 3;
+  int32 position = 4;
+}
+
+message PromptPosition {
+  string id = 1;
+  int32 position = 2;
+}
+
+message CreateProfileRequest {
+  string id = 1;
+  PersonalInfo personal_info = 2;
+}
+
+message GetProfileRequest {
+  string id = 1;
+}
+
+message UpdateProfileRequest {
+  string id = 1;
+  PersonalInfo personal_info = 2;
+}
+
+message ProfileResponse {
+  string id = 1;
+  PersonalInfo personal_info = 2;
+}
+
+message GetPromptsRequest {
+  string user_id = 1;
+}
+
+message AddPromptsRequest {
+  string user_id = 1;
+  repeated Prompt prompts = 2;
+}
+
+message PromptsResponse {
+  string user_id = 1;
+  repeated Prompt prompts = 2;
+}
+
+message UpdatePromptRequest {
+  string user_id = 1;
+  Prompt prompt = 2;
+}
+
+message SinglePromptResponse {
+  string user_id = 1;
+  Prompt prompt = 2;
+}
+
+message UpdatePromptsPositionsRequest {
+  string user_id = 1;
+  repeated PromptPosition prompt_positions = 2;
+}
