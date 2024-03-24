@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	grpcRecovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
-	"github.com/soulmate-dating/profiles.git/internal/app"
+	"github.com/soulmate-dating/profiles/internal/app"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

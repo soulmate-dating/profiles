@@ -2,7 +2,7 @@ package grpc
 
 import (
 	"context"
-	"github.com/soulmate-dating/profiles.git/internal/models"
+	"github.com/soulmate-dating/profiles/internal/models"
 	"google.golang.org/grpc/status"
 	"strings"
 )

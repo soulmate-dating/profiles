@@ -1,4 +1,4 @@
-module github.com/soulmate-dating/profiles.git
+module github.com/soulmate-dating/profiles
 
 go 1.20
 

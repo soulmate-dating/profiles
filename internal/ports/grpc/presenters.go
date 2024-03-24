@@ -3,8 +3,8 @@ package grpc
 import (
 	"errors"
 	"github.com/TobbyMax/validator"
-	"github.com/soulmate-dating/profiles.git/internal/app"
-	"github.com/soulmate-dating/profiles.git/internal/models"
+	"github.com/soulmate-dating/profiles/internal/app"
+	"github.com/soulmate-dating/profiles/internal/models"
 	"google.golang.org/grpc/codes"
 	"strings"
 )

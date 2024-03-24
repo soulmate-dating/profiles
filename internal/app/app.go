@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/soulmate-dating/profiles.git/internal/adapters/postgres"
-	"github.com/soulmate-dating/profiles.git/internal/models"
+	"github.com/soulmate-dating/profiles/internal/adapters/postgres"
+	"github.com/soulmate-dating/profiles/internal/models"
 )
 
 var (

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/soulmate-dating/profiles.git/internal/models"
+	"github.com/soulmate-dating/profiles/internal/models"
 )
 
 type Repo struct {
