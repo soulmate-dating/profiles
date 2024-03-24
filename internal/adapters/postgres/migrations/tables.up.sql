@@ -20,11 +20,22 @@ CREATE TABLE profiles
     sex               GENDER,
     preferred_partner PREFERRED_PARTNER,
     intention         INTENTION,
-    height            INTEGER CHECK (height > 0 && height < 300),
+    height            INTEGER,
     has_children      BOOLEAN,
     family_plans      TEXT,
     location          TEXT,
     drinks_alcohol    HABIT,
     smokes HABIT,
     PRIMARY KEY (user_id)
+);
+
+CREATE TABLE prompts
+(
+    uid TEXT,
+    user_id TEXT,
+    position INTEGER,
+    question TEXT,
+    answer TEXT,
+    PRIMARY KEY (uid),
+    FOREIGN KEY (user_id) REFERENCES profiles (user_id)
 );

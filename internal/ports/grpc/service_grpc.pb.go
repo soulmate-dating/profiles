@@ -28,7 +28,7 @@ type ProfileServiceClient interface {
 	GetPrompts(ctx context.Context, in *GetPromptsRequest, opts ...grpc.CallOption) (*PromptsResponse, error)
 	AddPrompts(ctx context.Context, in *AddPromptsRequest, opts ...grpc.CallOption) (*PromptsResponse, error)
 	UpdatePrompt(ctx context.Context, in *UpdatePromptRequest, opts ...grpc.CallOption) (*SinglePromptResponse, error)
-	ReorderPrompts(ctx context.Context, in *UpdatePromptsPositionsRequest, opts ...grpc.CallOption) (*PromptsResponse, error)
+	UpdatePromptsPositions(ctx context.Context, in *UpdatePromptsPositionsRequest, opts ...grpc.CallOption) (*PromptsResponse, error)
 }
 
 type profileServiceClient struct {
@@ -93,9 +93,9 @@ func (c *profileServiceClient) UpdatePrompt(ctx context.Context, in *UpdatePromp
 	return out, nil
 }
 
-func (c *profileServiceClient) ReorderPrompts(ctx context.Context, in *UpdatePromptsPositionsRequest, opts ...grpc.CallOption) (*PromptsResponse, error) {
+func (c *profileServiceClient) UpdatePromptsPositions(ctx context.Context, in *UpdatePromptsPositionsRequest, opts ...grpc.CallOption) (*PromptsResponse, error) {
 	out := new(PromptsResponse)
-	err := c.cc.Invoke(ctx, "/profiles.ProfileService/ReorderPrompts", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/profiles.ProfileService/UpdatePromptsPositions", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +112,7 @@ type ProfileServiceServer interface {
 	GetPrompts(context.Context, *GetPromptsRequest) (*PromptsResponse, error)
 	AddPrompts(context.Context, *AddPromptsRequest) (*PromptsResponse, error)
 	UpdatePrompt(context.Context, *UpdatePromptRequest) (*SinglePromptResponse, error)
-	ReorderPrompts(context.Context, *UpdatePromptsPositionsRequest) (*PromptsResponse, error)
+	UpdatePromptsPositions(context.Context, *UpdatePromptsPositionsRequest) (*PromptsResponse, error)
 	mustEmbedUnimplementedProfileServiceServer()
 }
 
@@ -138,8 +138,8 @@ func (UnimplementedProfileServiceServer) AddPrompts(context.Context, *AddPrompts
 func (UnimplementedProfileServiceServer) UpdatePrompt(context.Context, *UpdatePromptRequest) (*SinglePromptResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdatePrompt not implemented")
 }
-func (UnimplementedProfileServiceServer) ReorderPrompts(context.Context, *UpdatePromptsPositionsRequest) (*PromptsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ReorderPrompts not implemented")
+func (UnimplementedProfileServiceServer) UpdatePromptsPositions(context.Context, *UpdatePromptsPositionsRequest) (*PromptsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdatePromptsPositions not implemented")
 }
 func (UnimplementedProfileServiceServer) mustEmbedUnimplementedProfileServiceServer() {}
 
@@ -262,20 +262,20 @@ func _ProfileService_UpdatePrompt_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ProfileService_ReorderPrompts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _ProfileService_UpdatePromptsPositions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdatePromptsPositionsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ProfileServiceServer).ReorderPrompts(ctx, in)
+		return srv.(ProfileServiceServer).UpdatePromptsPositions(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/profiles.ProfileService/ReorderPrompts",
+		FullMethod: "/profiles.ProfileService/UpdatePromptsPositions",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProfileServiceServer).ReorderPrompts(ctx, req.(*UpdatePromptsPositionsRequest))
+		return srv.(ProfileServiceServer).UpdatePromptsPositions(ctx, req.(*UpdatePromptsPositionsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -312,8 +312,8 @@ var ProfileService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _ProfileService_UpdatePrompt_Handler,
 		},
 		{
-			MethodName: "ReorderPrompts",
-			Handler:    _ProfileService_ReorderPrompts_Handler,
+			MethodName: "UpdatePromptsPositions",
+			Handler:    _ProfileService_UpdatePromptsPositions_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

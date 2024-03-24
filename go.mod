@@ -1,9 +1,10 @@
-module github.com/soulmate-dating/profiles.git
+module github.com/soulmate-dating/profiles
 
 go 1.20
 
 require (
 	github.com/TobbyMax/validator v1.2.3
+	github.com/google/uuid v1.6.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/jackc/pgx/v5 v5.3.1
 	golang.org/x/sync v0.6.0

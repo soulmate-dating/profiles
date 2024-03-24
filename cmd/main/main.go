@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
-	"github.com/soulmate-dating/profiles.git/internal/adapters/postgres"
-	"github.com/soulmate-dating/profiles.git/internal/app"
-	"github.com/soulmate-dating/profiles.git/internal/graceful"
-	grpcSvc "github.com/soulmate-dating/profiles.git/internal/ports/grpc"
+	"github.com/soulmate-dating/profiles/internal/adapters/postgres"
+	"github.com/soulmate-dating/profiles/internal/app"
+	"github.com/soulmate-dating/profiles/internal/graceful"
+	grpcSvc "github.com/soulmate-dating/profiles/internal/ports/grpc"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"os"
