@@ -4,27 +4,15 @@ import (
 	"context"
 	"github.com/soulmate-dating/profiles.git/internal/models"
 	"google.golang.org/grpc/status"
+	"strings"
 )
 
 func (s *ProfileService) CreateProfile(ctx context.Context, request *CreateProfileRequest) (*ProfileResponse, error) {
-	info := request.GetPersonalInfo()
-	birthDate, err := models.ParseDate(info.GetBirthDate())
-	p := models.Profile{
-		UserId:           request.GetId(),
-		FirstName:        info.GetFirstName(),
-		LastName:         info.GetLastName(),
-		BirthDate:        birthDate,
-		Sex:              info.GetSex(),
-		PreferredPartner: info.GetPreferredPartner(),
-		Intention:        info.GetIntention(),
-		Height:           info.GetHeight(),
-		HasChildren:      info.GetHasChildren(),
-		FamilyPlans:      info.GetFamilyPlans(),
-		Location:         info.GetLocation(),
-		DrinksAlcohol:    info.GetDrinksAlcohol(),
-		Smokes:           info.GetSmokes(),
+	profile, err := mapCreateProfileRequest(request)
+	if err != nil {
+		return nil, status.Error(GetErrorCode(err), err.Error())
 	}
-	profile, err := s.app.CreateProfile(ctx, &p)
+	profile, err = s.app.CreateProfile(ctx, profile)
 	if err != nil {
 		return nil, status.Error(GetErrorCode(err), err.Error())
 	}
@@ -47,15 +35,15 @@ func (s *ProfileService) UpdateProfile(ctx context.Context, request *UpdateProfi
 		FirstName:        info.GetFirstName(),
 		LastName:         info.GetLastName(),
 		BirthDate:        birthDate,
-		Sex:              info.GetSex(),
-		PreferredPartner: info.GetPreferredPartner(),
-		Intention:        info.GetIntention(),
+		Sex:              strings.ToLower(info.GetSex()),
+		PreferredPartner: strings.ToLower(info.GetPreferredPartner()),
+		Intention:        strings.ToLower(info.GetIntention()),
 		Height:           info.GetHeight(),
 		HasChildren:      info.GetHasChildren(),
-		FamilyPlans:      info.GetFamilyPlans(),
+		FamilyPlans:      strings.ToLower(info.GetFamilyPlans()),
 		Location:         info.GetLocation(),
-		DrinksAlcohol:    info.GetDrinksAlcohol(),
-		Smokes:           info.GetSmokes(),
+		DrinksAlcohol:    strings.ToLower(info.GetDrinksAlcohol()),
+		Smokes:           strings.ToLower(info.GetSmokes()),
 	}
 	profile, err := s.app.UpdateProfile(ctx, &p)
 	if err != nil {

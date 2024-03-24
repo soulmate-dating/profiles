@@ -6,6 +6,7 @@ import (
 	"github.com/soulmate-dating/profiles.git/internal/app"
 	"github.com/soulmate-dating/profiles.git/internal/models"
 	"google.golang.org/grpc/codes"
+	"strings"
 )
 
 var ErrMissingArgument = errors.New("required argument is missing")
@@ -53,6 +54,29 @@ func SinglePromptSuccessResponse(p *models.Prompt) *SinglePromptResponse {
 			Position: p.Position,
 		},
 	}
+}
+
+func mapCreateProfileRequest(request *CreateProfileRequest) (*models.Profile, error) {
+	info := request.GetPersonalInfo()
+	birthDate, err := models.ParseDate(info.GetBirthDate())
+	if err != nil {
+		return nil, err
+	}
+	return &models.Profile{
+		UserId:           request.GetId(),
+		FirstName:        info.GetFirstName(),
+		LastName:         info.GetLastName(),
+		BirthDate:        birthDate,
+		Sex:              strings.ToLower(info.GetSex()),
+		PreferredPartner: strings.ToLower(info.GetPreferredPartner()),
+		Intention:        strings.ToLower(info.GetIntention()),
+		Height:           info.GetHeight(),
+		HasChildren:      info.GetHasChildren(),
+		FamilyPlans:      strings.ToLower(info.GetFamilyPlans()),
+		Location:         info.GetLocation(),
+		DrinksAlcohol:    strings.ToLower(info.GetDrinksAlcohol()),
+		Smokes:           strings.ToLower(info.GetSmokes()),
+	}, nil
 }
 
 func GetErrorCode(err error) codes.Code {
