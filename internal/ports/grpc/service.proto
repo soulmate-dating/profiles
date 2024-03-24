@@ -11,7 +11,7 @@ service ProfileService {
   rpc GetPrompts(GetPromptsRequest) returns (PromptsResponse) {}
   rpc AddPrompts(AddPromptsRequest) returns (PromptsResponse) {}
   rpc UpdatePrompt(UpdatePromptRequest) returns (SinglePromptResponse) {}
-  rpc ReorderPrompts(UpdatePromptsPositionsRequest) returns (PromptsResponse) {}
+  rpc UpdatePromptsPositions(UpdatePromptsPositionsRequest) returns (PromptsResponse) {}
 }
 
 message PersonalInfo {
@@ -25,9 +25,8 @@ message PersonalInfo {
   bool has_children = 8;
   string family_plans = 9;
   string location = 10;
-  string education_level = 11;
-  string drinks_alcohol = 12;
-  string smokes_cigarettes = 13;
+  string drinks_alcohol = 11;
+  string smokes = 12;
 }
 
 message Prompt {

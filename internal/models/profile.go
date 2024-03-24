@@ -1,18 +1,19 @@
 package models
 
+import "time"
+
 type Profile struct {
-	UserId           string `json:"user_id"`
-	FirstName        string `json:"first_name,omitempty"`
-	LastName         string `json:"last_name"`
-	BirthDate        string `json:"birth_date"`
-	Sex              string `json:"sex,omitempty"`
-	PreferredPartner string `json:"preferred_partner,omitempty"`
-	Intention        string `json:"intention,omitempty"`
-	Height           uint32 `json:"height,omitempty"`
-	HasChildren      bool   `json:"has_children,omitempty"`
-	FamilyPlans      string `json:"family_plans,omitempty"`
-	Location         string `json:"location,omitempty"`
-	EducationLevel   string `json:"education_level,omitempty"`
-	DrinksAlcohol    string `json:"drinks_alcohol,omitempty"`
-	SmokesCigarettes string `json:"smokes_cigarettes,omitempty"`
+	UserId           string    `db:"user_id"`
+	FirstName        string    `db:"first_name,omitempty"`
+	LastName         string    `db:"last_name"`
+	BirthDate        time.Time `db:"birth_date"`
+	Sex              string    `db:"sex,omitempty"`
+	PreferredPartner string    `db:"preferred_partner,omitempty"`
+	Intention        string    `db:"intention,omitempty"`
+	Height           uint32    `db:"height,omitempty"`
+	HasChildren      bool      `db:"has_children,omitempty"`
+	FamilyPlans      string    `db:"family_plans,omitempty"`
+	Location         string    `db:"location,omitempty"`
+	DrinksAlcohol    string    `db:"drinks_alcohol,omitempty"`
+	Smokes           string    `db:"smokes,omitempty"`
 }

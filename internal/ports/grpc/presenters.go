@@ -16,7 +16,7 @@ func ProfileSuccessResponse(p *models.Profile) *ProfileResponse {
 		PersonalInfo: &PersonalInfo{
 			FirstName:        p.FirstName,
 			LastName:         p.LastName,
-			BirthDate:        p.BirthDate,
+			BirthDate:        p.BirthDate.Format(models.DateLayout),
 			Sex:              p.Sex,
 			PreferredPartner: p.PreferredPartner,
 			Intention:        p.Intention,
@@ -24,9 +24,33 @@ func ProfileSuccessResponse(p *models.Profile) *ProfileResponse {
 			HasChildren:      p.HasChildren,
 			FamilyPlans:      p.FamilyPlans,
 			Location:         p.Location,
-			EducationLevel:   p.EducationLevel,
 			DrinksAlcohol:    p.DrinksAlcohol,
-			SmokesCigarettes: p.SmokesCigarettes,
+			Smokes:           p.Smokes,
+		},
+	}
+}
+
+func PromptsSuccessResponse(userId string, prompts []models.Prompt) *PromptsResponse {
+	var res []*Prompt
+	for _, p := range prompts {
+		res = append(res, &Prompt{
+			Id:       p.UID,
+			Question: p.Question,
+			Answer:   p.Answer,
+			Position: p.Position,
+		})
+	}
+	return &PromptsResponse{UserId: userId, Prompts: res}
+}
+
+func SinglePromptSuccessResponse(p *models.Prompt) *SinglePromptResponse {
+	return &SinglePromptResponse{
+		UserId: p.UserId,
+		Prompt: &Prompt{
+			Id:       p.UID,
+			Question: p.Question,
+			Answer:   p.Answer,
+			Position: p.Position,
 		},
 	}
 }

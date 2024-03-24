@@ -18,6 +18,8 @@ type ProfileService struct {
 	app app.App
 }
 
+func (s *ProfileService) mustEmbedUnimplementedProfileServiceServer() {}
+
 func NewService(a app.App) ProfileServiceServer {
 	service := &ProfileService{app: a}
 	return service
