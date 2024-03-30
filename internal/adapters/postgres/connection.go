@@ -7,7 +7,7 @@ import (
 )
 
 func Connect() (*pgxpool.Pool, error) {
-	connString := "host=postgres port=5432 dbname=glimpse_profiles user=glimpse_profiles password=password sslmode=disable"
+	connString := "host=postgres port=5432 dbname=glimpse user=glimpse password=password sslmode=disable"
 	poolCfg, err := pgxpool.ParseConfig(connString)
 	if err != nil {
 		return nil, err
