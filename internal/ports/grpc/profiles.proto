@@ -1,12 +1,13 @@
 syntax = "proto3";
 
 package profiles;
-option go_package = "github.com/soulmate-dating/profiles.git/internal/ports/grpc";
+option go_package = "github.com/soulmate-dating/profiles/internal/ports/grpc";
 
 service ProfileService {
   rpc CreateProfile(CreateProfileRequest) returns (ProfileResponse) {}
   rpc GetProfile(GetProfileRequest) returns (ProfileResponse) {}
   rpc UpdateProfile(UpdateProfileRequest) returns (ProfileResponse) {}
+  rpc GetMultipleProfiles(GetMultipleProfilesRequest) returns (GetMultipleProfilesResponse) {}
 
   rpc GetPrompts(GetPromptsRequest) returns (PromptsResponse) {}
   rpc AddPrompts(AddPromptsRequest) returns (PromptsResponse) {}
@@ -27,6 +28,7 @@ message PersonalInfo {
   string location = 10;
   string drinks_alcohol = 11;
   string smokes = 12;
+  string profile_pic_link = 13;
 }
 
 message Prompt {
@@ -87,4 +89,12 @@ message SinglePromptResponse {
 message UpdatePromptsPositionsRequest {
   string user_id = 1;
   repeated PromptPosition prompt_positions = 2;
+}
+
+message GetMultipleProfilesRequest {
+  repeated string user_ids = 1;
+}
+
+message GetMultipleProfilesResponse {
+  repeated ProfileResponse profiles = 1;
 }

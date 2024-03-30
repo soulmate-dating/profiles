@@ -76,7 +76,7 @@ func (a *Application) GetPrompts(ctx context.Context, userId string) ([]models.P
 
 func (a *Application) AddPrompts(ctx context.Context, prompts []models.Prompt) ([]models.Prompt, error) {
 	for i := range prompts {
-		prompts[i].UID = models.NewUID()
+		prompts[i].ID = models.NewUID()
 		err := a.repository.CreatePrompt(ctx, prompts[i])
 		if err != nil {
 			return nil, err

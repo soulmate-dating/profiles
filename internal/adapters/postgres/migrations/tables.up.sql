@@ -13,7 +13,7 @@ CREATE TYPE FAMILY_PLANS AS ENUM ('don''t want children', 'want children', 'open
 
 CREATE TABLE profiles
 (
-    user_id           TEXT,
+    user_id           uuid,
     first_name        TEXT,
     last_name         TEXT,
     birth_date        DATE,
@@ -31,11 +31,11 @@ CREATE TABLE profiles
 
 CREATE TABLE prompts
 (
-    uid TEXT,
-    user_id TEXT,
+    id uuid,
+    user_id uuid,
     position INTEGER,
     question TEXT,
     answer TEXT,
-    PRIMARY KEY (uid),
+    PRIMARY KEY (id),
     FOREIGN KEY (user_id) REFERENCES profiles (user_id)
 );

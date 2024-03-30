@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"github.com/google/uuid"
 	"github.com/soulmate-dating/profiles/internal/models"
 	"google.golang.org/grpc/status"
 	"strings"
@@ -30,8 +31,15 @@ func (s *ProfileService) GetProfile(ctx context.Context, request *GetProfileRequ
 func (s *ProfileService) UpdateProfile(ctx context.Context, request *UpdateProfileRequest) (*ProfileResponse, error) {
 	info := request.GetPersonalInfo()
 	birthDate, err := models.ParseDate(info.GetBirthDate())
+	if err != nil {
+		return nil, status.Error(GetErrorCode(err), err.Error())
+	}
+	userId, err := uuid.Parse(request.GetId())
+	if err != nil {
+		return nil, status.Error(GetErrorCode(err), err.Error())
+	}
 	p := models.Profile{
-		UserId:           request.GetId(),
+		UserId:           userId,
 		FirstName:        info.GetFirstName(),
 		LastName:         info.GetLastName(),
 		BirthDate:        birthDate,
@@ -62,16 +70,20 @@ func (s *ProfileService) GetPrompts(ctx context.Context, request *GetPromptsRequ
 
 func (s *ProfileService) AddPrompts(ctx context.Context, request *AddPromptsRequest) (*PromptsResponse, error) {
 	prompts := make([]models.Prompt, len(request.GetPrompts()))
+	userId, err := uuid.Parse(request.GetUserId())
+	if err != nil {
+		return nil, status.Error(GetErrorCode(err), err.Error())
+	}
 	for i, p := range request.GetPrompts() {
 		prompts[i] = models.Prompt{
-			UserId:   request.GetUserId(),
+			UserId:   userId,
 			Question: p.GetQuestion(),
 			Answer:   p.GetAnswer(),
 			Position: p.GetPosition(),
 		}
 	}
 
-	prompts, err := s.app.AddPrompts(ctx, prompts)
+	prompts, err = s.app.AddPrompts(ctx, prompts)
 	if err != nil {
 		return nil, status.Error(GetErrorCode(err), err.Error())
 	}
@@ -80,9 +92,17 @@ func (s *ProfileService) AddPrompts(ctx context.Context, request *AddPromptsRequ
 
 func (s *ProfileService) UpdatePrompt(ctx context.Context, request *UpdatePromptRequest) (*SinglePromptResponse, error) {
 	promptInfo := request.GetPrompt()
+	userId, err := uuid.Parse(request.GetUserId())
+	if err != nil {
+		return nil, status.Error(GetErrorCode(err), err.Error())
+	}
+	promptId, err := uuid.Parse(promptInfo.GetId())
+	if err != nil {
+		return nil, status.Error(GetErrorCode(err), err.Error())
+	}
 	p := models.Prompt{
-		UID:      promptInfo.GetId(),
-		UserId:   request.GetUserId(),
+		ID:       promptId,
+		UserId:   userId,
 		Question: promptInfo.GetQuestion(),
 		Answer:   promptInfo.GetAnswer(),
 		Position: promptInfo.GetPosition(),
@@ -96,13 +116,17 @@ func (s *ProfileService) UpdatePrompt(ctx context.Context, request *UpdatePrompt
 
 func (s *ProfileService) UpdatePromptsPositions(ctx context.Context, request *UpdatePromptsPositionsRequest) (*PromptsResponse, error) {
 	prompts := make([]models.Prompt, len(request.GetPromptPositions()))
+	userId, err := uuid.Parse(request.GetUserId())
+	if err != nil {
+		return nil, status.Error(GetErrorCode(err), err.Error())
+	}
 	for i, p := range request.GetPromptPositions() {
 		prompts[i] = models.Prompt{
-			UserId:   request.GetUserId(),
+			UserId:   userId,
 			Position: p.GetPosition(),
 		}
 	}
-	prompts, err := s.app.UpdatePromptsPositions(ctx, prompts)
+	prompts, err = s.app.UpdatePromptsPositions(ctx, prompts)
 	if err != nil {
 		return nil, status.Error(GetErrorCode(err), err.Error())
 	}
