@@ -32,7 +32,7 @@ func ProfileSuccessResponse(p *models.Profile) *ProfileResponse {
 	}
 }
 
-func GetMultipleProfilesSuccessResponse(profiles []models.Profile) *GetMultipleProfilesResponse {
+func GetMultipleProfilesSuccessResponse(profiles []models.Profile) *MultipleProfilesResponse {
 	res := make([]*ProfileResponse, len(profiles))
 	for i, p := range profiles {
 		res[i] = &ProfileResponse{
@@ -53,7 +53,7 @@ func GetMultipleProfilesSuccessResponse(profiles []models.Profile) *GetMultipleP
 			},
 		}
 	}
-	return &GetMultipleProfilesResponse{Profiles: res}
+	return &MultipleProfilesResponse{Profiles: res}
 }
 
 func PromptsSuccessResponse(userId string, prompts []models.Prompt) *PromptsResponse {

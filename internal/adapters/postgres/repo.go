@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/soulmate-dating/profiles/internal/models"
@@ -58,6 +59,21 @@ func (r *Repo) GetMultipleProfilesByIDs(ctx context.Context, userIds []string) (
 		return nil, fmt.Errorf("map profiles: %w", err)
 	}
 	return prompts, nil
+}
+
+func (r *Repo) GetRandomProfileBySexAndPreference(
+	ctx context.Context, requesterId uuid.UUID, preference models.Preference, sex string,
+) (*models.Profile, error) {
+	pref1, pref2 := preference.Preferences()
+	rows, err := r.pool.Query(ctx, getRandomProfileBySexAndPreferenceQuery, requesterId, pref1, pref2, sex)
+	if err != nil {
+		return nil, fmt.Errorf("get profile by id: %w", err)
+	}
+	profile, err := pgx.CollectOneRow(rows, r.mapProfiles)
+	if err != nil {
+		return nil, fmt.Errorf("map profile: %w", err)
+	}
+	return &profile, nil
 }
 
 func (r *Repo) UpdateProfile(ctx context.Context, p *models.Profile) (*models.Profile, error) {

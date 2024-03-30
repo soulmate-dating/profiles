@@ -3,7 +3,10 @@ package app
 import (
 	"context"
 	"fmt"
+
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
+
 	"github.com/soulmate-dating/profiles/internal/adapters/postgres"
 	"github.com/soulmate-dating/profiles/internal/models"
 )
@@ -22,6 +25,7 @@ type App interface {
 	UpdatePrompt(ctx context.Context, prompt *models.Prompt) (*models.Prompt, error)
 	UpdatePromptsPositions(ctx context.Context, prompts []models.Prompt) ([]models.Prompt, error)
 	GetMultipleProfiles(ctx context.Context, ids []string) ([]models.Profile, error)
+	GetRandomProfilePreferredByUser(ctx context.Context, userId string) (*models.Profile, error)
 }
 
 type Repository interface {
@@ -34,10 +38,29 @@ type Repository interface {
 	UpdatePromptContent(ctx context.Context, prompt *models.Prompt) (*models.Prompt, error)
 	UpdatePromptsPositions(ctx context.Context, prompts []models.Prompt) ([]models.Prompt, error)
 	GetMultipleProfilesByIDs(ctx context.Context, ids []string) ([]models.Profile, error)
+	GetRandomProfileBySexAndPreference(
+		ctx context.Context, requesterId uuid.UUID, preference models.Preference, sex string,
+	) (*models.Profile, error)
 }
 
 type Application struct {
 	repository Repository
+}
+
+func (a *Application) GetRandomProfilePreferredByUser(ctx context.Context, userId string) (*models.Profile, error) {
+	profile, err := a.repository.GetProfileByID(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	randomProfile, err := a.repository.GetRandomProfileBySexAndPreference(
+		ctx, profile.UserId, models.Preference(profile.PreferredPartner), profile.Sex,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return randomProfile, nil
 }
 
 func (a *Application) GetMultipleProfiles(ctx context.Context, ids []string) ([]models.Profile, error) {

@@ -60,12 +60,20 @@ func (s *ProfileService) UpdateProfile(ctx context.Context, request *UpdateProfi
 	return ProfileSuccessResponse(profile), nil
 }
 
-func (s *ProfileService) GetMultipleProfiles(ctx context.Context, request *GetMultipleProfilesRequest) (*GetMultipleProfilesResponse, error) {
+func (s *ProfileService) GetMultipleProfiles(ctx context.Context, request *GetMultipleProfilesRequest) (*MultipleProfilesResponse, error) {
 	profiles, err := s.app.GetMultipleProfiles(ctx, request.GetIds())
 	if err != nil {
 		return nil, status.Error(GetErrorCode(err), err.Error())
 	}
 	return GetMultipleProfilesSuccessResponse(profiles), nil
+}
+
+func (s *ProfileService) GetRandomProfilePreferredByUser(ctx context.Context, request *GetRandomProfilePreferredByUserRequest) (*ProfileResponse, error) {
+	profile, err := s.app.GetRandomProfilePreferredByUser(ctx, request.GetUserId())
+	if err != nil {
+		return nil, status.Error(GetErrorCode(err), err.Error())
+	}
+	return ProfileSuccessResponse(profile), nil
 }
 
 func (s *ProfileService) GetPrompts(ctx context.Context, request *GetPromptsRequest) (*PromptsResponse, error) {

@@ -25,7 +25,8 @@ type ProfileServiceClient interface {
 	CreateProfile(ctx context.Context, in *CreateProfileRequest, opts ...grpc.CallOption) (*ProfileResponse, error)
 	GetProfile(ctx context.Context, in *GetProfileRequest, opts ...grpc.CallOption) (*ProfileResponse, error)
 	UpdateProfile(ctx context.Context, in *UpdateProfileRequest, opts ...grpc.CallOption) (*ProfileResponse, error)
-	GetMultipleProfiles(ctx context.Context, in *GetMultipleProfilesRequest, opts ...grpc.CallOption) (*GetMultipleProfilesResponse, error)
+	GetMultipleProfiles(ctx context.Context, in *GetMultipleProfilesRequest, opts ...grpc.CallOption) (*MultipleProfilesResponse, error)
+	GetRandomProfilePreferredByUser(ctx context.Context, in *GetRandomProfilePreferredByUserRequest, opts ...grpc.CallOption) (*ProfileResponse, error)
 	GetPrompts(ctx context.Context, in *GetPromptsRequest, opts ...grpc.CallOption) (*PromptsResponse, error)
 	AddPrompts(ctx context.Context, in *AddPromptsRequest, opts ...grpc.CallOption) (*PromptsResponse, error)
 	UpdatePrompt(ctx context.Context, in *UpdatePromptRequest, opts ...grpc.CallOption) (*SinglePromptResponse, error)
@@ -67,9 +68,18 @@ func (c *profileServiceClient) UpdateProfile(ctx context.Context, in *UpdateProf
 	return out, nil
 }
 
-func (c *profileServiceClient) GetMultipleProfiles(ctx context.Context, in *GetMultipleProfilesRequest, opts ...grpc.CallOption) (*GetMultipleProfilesResponse, error) {
-	out := new(GetMultipleProfilesResponse)
+func (c *profileServiceClient) GetMultipleProfiles(ctx context.Context, in *GetMultipleProfilesRequest, opts ...grpc.CallOption) (*MultipleProfilesResponse, error) {
+	out := new(MultipleProfilesResponse)
 	err := c.cc.Invoke(ctx, "/profiles.ProfileService/GetMultipleProfiles", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *profileServiceClient) GetRandomProfilePreferredByUser(ctx context.Context, in *GetRandomProfilePreferredByUserRequest, opts ...grpc.CallOption) (*ProfileResponse, error) {
+	out := new(ProfileResponse)
+	err := c.cc.Invoke(ctx, "/profiles.ProfileService/GetRandomProfilePreferredByUser", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +129,8 @@ type ProfileServiceServer interface {
 	CreateProfile(context.Context, *CreateProfileRequest) (*ProfileResponse, error)
 	GetProfile(context.Context, *GetProfileRequest) (*ProfileResponse, error)
 	UpdateProfile(context.Context, *UpdateProfileRequest) (*ProfileResponse, error)
-	GetMultipleProfiles(context.Context, *GetMultipleProfilesRequest) (*GetMultipleProfilesResponse, error)
+	GetMultipleProfiles(context.Context, *GetMultipleProfilesRequest) (*MultipleProfilesResponse, error)
+	GetRandomProfilePreferredByUser(context.Context, *GetRandomProfilePreferredByUserRequest) (*ProfileResponse, error)
 	GetPrompts(context.Context, *GetPromptsRequest) (*PromptsResponse, error)
 	AddPrompts(context.Context, *AddPromptsRequest) (*PromptsResponse, error)
 	UpdatePrompt(context.Context, *UpdatePromptRequest) (*SinglePromptResponse, error)
@@ -140,8 +151,11 @@ func (UnimplementedProfileServiceServer) GetProfile(context.Context, *GetProfile
 func (UnimplementedProfileServiceServer) UpdateProfile(context.Context, *UpdateProfileRequest) (*ProfileResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateProfile not implemented")
 }
-func (UnimplementedProfileServiceServer) GetMultipleProfiles(context.Context, *GetMultipleProfilesRequest) (*GetMultipleProfilesResponse, error) {
+func (UnimplementedProfileServiceServer) GetMultipleProfiles(context.Context, *GetMultipleProfilesRequest) (*MultipleProfilesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetMultipleProfiles not implemented")
+}
+func (UnimplementedProfileServiceServer) GetRandomProfilePreferredByUser(context.Context, *GetRandomProfilePreferredByUserRequest) (*ProfileResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetRandomProfilePreferredByUser not implemented")
 }
 func (UnimplementedProfileServiceServer) GetPrompts(context.Context, *GetPromptsRequest) (*PromptsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPrompts not implemented")
@@ -240,6 +254,24 @@ func _ProfileService_GetMultipleProfiles_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ProfileService_GetRandomProfilePreferredByUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRandomProfilePreferredByUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProfileServiceServer).GetRandomProfilePreferredByUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/profiles.ProfileService/GetRandomProfilePreferredByUser",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProfileServiceServer).GetRandomProfilePreferredByUser(ctx, req.(*GetRandomProfilePreferredByUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ProfileService_GetPrompts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetPromptsRequest)
 	if err := dec(in); err != nil {
@@ -334,6 +366,10 @@ var ProfileService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetMultipleProfiles",
 			Handler:    _ProfileService_GetMultipleProfiles_Handler,
+		},
+		{
+			MethodName: "GetRandomProfilePreferredByUser",
+			Handler:    _ProfileService_GetRandomProfilePreferredByUser_Handler,
 		},
 		{
 			MethodName: "GetPrompts",
