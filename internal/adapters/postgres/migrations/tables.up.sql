@@ -10,7 +10,7 @@ CREATE TYPE INTENTION AS ENUM (
     'prefer not to say'
     );
 CREATE TYPE GENDER AS ENUM ('man', 'woman');
-CREATE TYPE PREFERRED_PARTNER AS ENUM ('men', 'women', 'anyone');
+CREATE TYPE PREFERRED_PARTNER AS ENUM ('man', 'woman', 'anyone');
 CREATE TYPE FAMILY_PLANS AS ENUM ('don''t want children', 'want children', 'open to children', 'not sure yet', 'prefer not to say');
 
 CREATE TABLE profiles.profiles
