@@ -16,6 +16,7 @@ services:
       - postgres
 
   postgres:
+    container_name: postgres_profiles
     image: postgres:latest
     environment:
       POSTGRES_DATABASE: glimpse_profiles
