@@ -48,6 +48,18 @@ func (r *Repo) GetProfileByID(ctx context.Context, id string) (*models.Profile, 
 	return &profile, nil
 }
 
+func (r *Repo) GetMultipleProfilesByIDs(ctx context.Context, userIds []string) ([]models.Profile, error) {
+	rows, err := r.pool.Query(ctx, getMultipleProfilesByIDsQuery, userIds)
+	if err != nil {
+		return nil, fmt.Errorf("get profiles by id: %w", err)
+	}
+	prompts, err := pgx.CollectRows(rows, r.mapProfiles)
+	if err != nil {
+		return nil, fmt.Errorf("map profiles: %w", err)
+	}
+	return prompts, nil
+}
+
 func (r *Repo) UpdateProfile(ctx context.Context, p *models.Profile) (*models.Profile, error) {
 	var args []any
 	args = append(args,
@@ -70,7 +82,7 @@ func (r *Repo) UpdateProfile(ctx context.Context, p *models.Profile) (*models.Pr
 func (r *Repo) GetPromptsByUser(ctx context.Context, userId string) ([]models.Prompt, error) {
 	rows, err := r.pool.Query(ctx, getPromptsQuery, userId)
 	if err != nil {
-		return nil, fmt.Errorf("get prmpts by id: %w", err)
+		return nil, fmt.Errorf("get prompts by id: %w", err)
 	}
 	prompts, err := pgx.CollectRows(rows, r.mapPrompts)
 	if err != nil {

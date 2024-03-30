@@ -60,6 +60,14 @@ func (s *ProfileService) UpdateProfile(ctx context.Context, request *UpdateProfi
 	return ProfileSuccessResponse(profile), nil
 }
 
+func (s *ProfileService) GetMultipleProfiles(ctx context.Context, request *GetMultipleProfilesRequest) (*GetMultipleProfilesResponse, error) {
+	profiles, err := s.app.GetMultipleProfiles(ctx, request.GetIds())
+	if err != nil {
+		return nil, status.Error(GetErrorCode(err), err.Error())
+	}
+	return GetMultipleProfilesSuccessResponse(profiles), nil
+}
+
 func (s *ProfileService) GetPrompts(ctx context.Context, request *GetPromptsRequest) (*PromptsResponse, error) {
 	prompts, err := s.app.GetPrompts(ctx, request.GetUserId())
 	if err != nil {
