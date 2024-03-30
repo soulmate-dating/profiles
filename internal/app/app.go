@@ -21,6 +21,7 @@ type App interface {
 	AddPrompts(ctx context.Context, prompts []models.Prompt) ([]models.Prompt, error)
 	UpdatePrompt(ctx context.Context, prompt *models.Prompt) (*models.Prompt, error)
 	UpdatePromptsPositions(ctx context.Context, prompts []models.Prompt) ([]models.Prompt, error)
+	GetMultipleProfiles(ctx context.Context, ids []string) ([]models.Profile, error)
 }
 
 type Repository interface {
@@ -32,10 +33,20 @@ type Repository interface {
 	CreatePrompt(ctx context.Context, prompt models.Prompt) error
 	UpdatePromptContent(ctx context.Context, prompt *models.Prompt) (*models.Prompt, error)
 	UpdatePromptsPositions(ctx context.Context, prompts []models.Prompt) ([]models.Prompt, error)
+	GetMultipleProfilesByIDs(ctx context.Context, ids []string) ([]models.Profile, error)
 }
 
 type Application struct {
 	repository Repository
+}
+
+func (a *Application) GetMultipleProfiles(ctx context.Context, ids []string) ([]models.Profile, error) {
+	p, err := a.repository.GetMultipleProfilesByIDs(ctx, ids)
+	if err != nil {
+		return nil, err
+	}
+
+	return p, nil
 }
 
 func (a *Application) CreateProfile(ctx context.Context, profile *models.Profile) (*models.Profile, error) {

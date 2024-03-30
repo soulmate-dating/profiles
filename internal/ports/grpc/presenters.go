@@ -32,15 +32,39 @@ func ProfileSuccessResponse(p *models.Profile) *ProfileResponse {
 	}
 }
 
+func GetMultipleProfilesSuccessResponse(profiles []models.Profile) *GetMultipleProfilesResponse {
+	res := make([]*ProfileResponse, len(profiles))
+	for i, p := range profiles {
+		res[i] = &ProfileResponse{
+			Id: p.UserId.String(),
+			PersonalInfo: &PersonalInfo{
+				FirstName:        p.FirstName,
+				LastName:         p.LastName,
+				BirthDate:        p.BirthDate.Format(models.DateLayout),
+				Sex:              p.Sex,
+				PreferredPartner: p.PreferredPartner,
+				Intention:        p.Intention,
+				Height:           p.Height,
+				HasChildren:      p.HasChildren,
+				FamilyPlans:      p.FamilyPlans,
+				Location:         p.Location,
+				DrinksAlcohol:    p.DrinksAlcohol,
+				Smokes:           p.Smokes,
+			},
+		}
+	}
+	return &GetMultipleProfilesResponse{Profiles: res}
+}
+
 func PromptsSuccessResponse(userId string, prompts []models.Prompt) *PromptsResponse {
-	var res []*Prompt
-	for _, p := range prompts {
-		res = append(res, &Prompt{
+	res := make([]*Prompt, len(prompts))
+	for i, p := range prompts {
+		res[i] = &Prompt{
 			Id:       p.ID.String(),
 			Question: p.Question,
 			Answer:   p.Answer,
 			Position: p.Position,
-		})
+		}
 	}
 	return &PromptsResponse{UserId: userId, Prompts: res}
 }
