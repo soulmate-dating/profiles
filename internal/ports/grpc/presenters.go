@@ -3,6 +3,7 @@ package grpc
 import (
 	"errors"
 	"github.com/TobbyMax/validator"
+	"github.com/google/uuid"
 	"github.com/soulmate-dating/profiles/internal/app"
 	"github.com/soulmate-dating/profiles/internal/models"
 	"google.golang.org/grpc/codes"
@@ -13,7 +14,7 @@ var ErrMissingArgument = errors.New("required argument is missing")
 
 func ProfileSuccessResponse(p *models.Profile) *ProfileResponse {
 	return &ProfileResponse{
-		Id: p.UserId,
+		Id: p.UserId.String(),
 		PersonalInfo: &PersonalInfo{
 			FirstName:        p.FirstName,
 			LastName:         p.LastName,
@@ -35,7 +36,7 @@ func PromptsSuccessResponse(userId string, prompts []models.Prompt) *PromptsResp
 	var res []*Prompt
 	for _, p := range prompts {
 		res = append(res, &Prompt{
-			Id:       p.UID,
+			Id:       p.ID.String(),
 			Question: p.Question,
 			Answer:   p.Answer,
 			Position: p.Position,
@@ -46,9 +47,9 @@ func PromptsSuccessResponse(userId string, prompts []models.Prompt) *PromptsResp
 
 func SinglePromptSuccessResponse(p *models.Prompt) *SinglePromptResponse {
 	return &SinglePromptResponse{
-		UserId: p.UserId,
+		UserId: p.UserId.String(),
 		Prompt: &Prompt{
-			Id:       p.UID,
+			Id:       p.ID.String(),
 			Question: p.Question,
 			Answer:   p.Answer,
 			Position: p.Position,
@@ -58,12 +59,16 @@ func SinglePromptSuccessResponse(p *models.Prompt) *SinglePromptResponse {
 
 func mapCreateProfileRequest(request *CreateProfileRequest) (*models.Profile, error) {
 	info := request.GetPersonalInfo()
+	userId, err := uuid.Parse(request.GetId())
+	if err != nil {
+		return nil, err
+	}
 	birthDate, err := models.ParseDate(info.GetBirthDate())
 	if err != nil {
 		return nil, err
 	}
 	return &models.Profile{
-		UserId:           request.GetId(),
+		UserId:           userId,
 		FirstName:        info.GetFirstName(),
 		LastName:         info.GetLastName(),
 		BirthDate:        birthDate,

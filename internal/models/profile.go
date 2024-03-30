@@ -1,9 +1,12 @@
 package models
 
-import "time"
+import (
+	"github.com/google/uuid"
+	"time"
+)
 
 type Profile struct {
-	UserId           string    `db:"user_id"`
+	UserId           uuid.UUID `db:"user_id"`
 	FirstName        string    `db:"first_name,omitempty"`
 	LastName         string    `db:"last_name"`
 	BirthDate        time.Time `db:"birth_date"`

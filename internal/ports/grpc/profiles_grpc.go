@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             v3.20.3
-// source: internal/ports/grpc/service.proto
+// source: internal/ports/grpc/profiles.proto
 
 package grpc
 
@@ -317,5 +317,5 @@ var ProfileService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "internal/ports/grpc/service.proto",
+	Metadata: "internal/ports/grpc/profiles.proto",
 }

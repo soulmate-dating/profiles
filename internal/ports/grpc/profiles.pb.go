@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.28.0
 // 	protoc        v3.20.3
-// source: internal/ports/grpc/service.proto
+// source: internal/ports/grpc/profiles.proto
 
 package grpc
 
