@@ -81,6 +81,38 @@ func SinglePromptSuccessResponse(p *models.Prompt) *SinglePromptResponse {
 	}
 }
 
+func FullProfileSuccessResponse(fp *models.FullProfile) *FullProfileResponse {
+	prompts := fp.Prompts
+	res := make([]*Prompt, len(prompts))
+	for i, p := range prompts {
+		res[i] = &Prompt{
+			Id:       p.ID.String(),
+			Question: p.Question,
+			Answer:   p.Answer,
+			Position: p.Position,
+		}
+	}
+	profile := fp.Profile
+	return &FullProfileResponse{
+		UserId: profile.UserId.String(),
+		PersonalInfo: &PersonalInfo{
+			FirstName:        profile.FirstName,
+			LastName:         profile.LastName,
+			BirthDate:        profile.BirthDate.Format(models.DateLayout),
+			Sex:              profile.Sex,
+			PreferredPartner: profile.PreferredPartner,
+			Intention:        profile.Intention,
+			Height:           profile.Height,
+			HasChildren:      profile.HasChildren,
+			FamilyPlans:      profile.FamilyPlans,
+			Location:         profile.Location,
+			DrinksAlcohol:    profile.DrinksAlcohol,
+			Smokes:           profile.Smokes,
+		},
+		Prompts: res,
+	}
+}
+
 func mapCreateProfileRequest(request *CreateProfileRequest) (*models.Profile, error) {
 	info := request.GetPersonalInfo()
 	userId, err := uuid.Parse(request.GetId())

@@ -25,7 +25,8 @@ type App interface {
 	UpdatePrompt(ctx context.Context, prompt *models.Prompt) (*models.Prompt, error)
 	UpdatePromptsPositions(ctx context.Context, prompts []models.Prompt) ([]models.Prompt, error)
 	GetMultipleProfiles(ctx context.Context, ids []string) ([]models.Profile, error)
-	GetRandomProfilePreferredByUser(ctx context.Context, userId string) (*models.Profile, error)
+	GetRandomProfilePreferredByUser(ctx context.Context, userId string) (*models.FullProfile, error)
+	GetFullProfile(ctx context.Context, userId string) (*models.FullProfile, error)
 }
 
 type Repository interface {
@@ -47,20 +48,45 @@ type Application struct {
 	repository Repository
 }
 
-func (a *Application) GetRandomProfilePreferredByUser(ctx context.Context, userId string) (*models.Profile, error) {
+func (a *Application) GetFullProfile(ctx context.Context, userId string) (*models.FullProfile, error) {
 	profile, err := a.repository.GetProfileByID(ctx, userId)
 	if err != nil {
 		return nil, err
 	}
 
-	randomProfile, err := a.repository.GetRandomProfileBySexAndPreference(
+	prompts, err := a.repository.GetPromptsByUser(ctx, profile.UserId.String())
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.FullProfile{
+		Profile: *profile,
+		Prompts: prompts,
+	}, nil
+}
+
+func (a *Application) GetRandomProfilePreferredByUser(ctx context.Context, userId string) (*models.FullProfile, error) {
+	profile, err := a.repository.GetProfileByID(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	recommendedProfile, err := a.repository.GetRandomProfileBySexAndPreference(
 		ctx, profile.UserId, models.Preference(profile.PreferredPartner), profile.Sex,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	return randomProfile, nil
+	prompts, err := a.repository.GetPromptsByUser(ctx, recommendedProfile.UserId.String())
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.FullProfile{
+		Profile: *recommendedProfile,
+		Prompts: prompts,
+	}, nil
 }
 
 func (a *Application) GetMultipleProfiles(ctx context.Context, ids []string) ([]models.Profile, error) {

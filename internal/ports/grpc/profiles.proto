@@ -8,7 +8,8 @@ service ProfileService {
   rpc GetProfile(GetProfileRequest) returns (ProfileResponse) {}
   rpc UpdateProfile(UpdateProfileRequest) returns (ProfileResponse) {}
   rpc GetMultipleProfiles(GetMultipleProfilesRequest) returns (MultipleProfilesResponse) {}
-  rpc GetRandomProfilePreferredByUser(GetRandomProfilePreferredByUserRequest) returns (ProfileResponse) {}
+  rpc GetRandomProfilePreferredByUser(GetRandomProfilePreferredByUserRequest) returns (FullProfileResponse) {}
+  rpc GetFullProfile(GetProfileRequest) returns (FullProfileResponse) {}
 
   rpc GetPrompts(GetPromptsRequest) returns (PromptsResponse) {}
   rpc AddPrompts(AddPromptsRequest) returns (PromptsResponse) {}
@@ -102,4 +103,10 @@ message MultipleProfilesResponse {
 
 message GetRandomProfilePreferredByUserRequest {
   string user_id = 1;
+}
+
+message FullProfileResponse {
+  string user_id = 1;
+  PersonalInfo personal_info = 2;
+  repeated Prompt prompts = 3;
 }
