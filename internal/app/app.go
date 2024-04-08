@@ -19,29 +19,29 @@ type App interface {
 	CreateProfile(ctx context.Context, profile *models.Profile) (*models.Profile, error)
 	GetProfile(ctx context.Context, userId string) (*models.Profile, error)
 	UpdateProfile(ctx context.Context, profile *models.Profile) (*models.Profile, error)
+	GetRandomProfilePreferredByUser(ctx context.Context, userId string) (*models.FullProfile, error)
+	GetFullProfile(ctx context.Context, userId string) (*models.FullProfile, error)
 
 	GetPrompts(ctx context.Context, userId string) ([]models.Prompt, error)
 	AddPrompts(ctx context.Context, prompts []models.Prompt) ([]models.Prompt, error)
 	UpdatePrompt(ctx context.Context, prompt *models.Prompt) (*models.Prompt, error)
 	UpdatePromptsPositions(ctx context.Context, prompts []models.Prompt) ([]models.Prompt, error)
 	GetMultipleProfiles(ctx context.Context, ids []string) ([]models.Profile, error)
-	GetRandomProfilePreferredByUser(ctx context.Context, userId string) (*models.FullProfile, error)
-	GetFullProfile(ctx context.Context, userId string) (*models.FullProfile, error)
 }
 
 type Repository interface {
 	CreateProfile(ctx context.Context, p *models.Profile) error
 	GetProfileByID(ctx context.Context, id string) (*models.Profile, error)
 	UpdateProfile(ctx context.Context, profile *models.Profile) (*models.Profile, error)
+	GetMultipleProfilesByIDs(ctx context.Context, ids []string) ([]models.Profile, error)
+	GetRandomProfileBySexAndPreference(
+		ctx context.Context, requesterId uuid.UUID, preference models.Preference, sex string,
+	) (*models.Profile, error)
 
 	GetPromptsByUser(ctx context.Context, userId string) ([]models.Prompt, error)
 	CreatePrompt(ctx context.Context, prompt models.Prompt) error
 	UpdatePromptContent(ctx context.Context, prompt *models.Prompt) (*models.Prompt, error)
 	UpdatePromptsPositions(ctx context.Context, prompts []models.Prompt) ([]models.Prompt, error)
-	GetMultipleProfilesByIDs(ctx context.Context, ids []string) ([]models.Profile, error)
-	GetRandomProfileBySexAndPreference(
-		ctx context.Context, requesterId uuid.UUID, preference models.Preference, sex string,
-	) (*models.Profile, error)
 }
 
 type Application struct {
