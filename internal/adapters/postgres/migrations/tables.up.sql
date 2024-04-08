@@ -39,5 +39,5 @@ CREATE TABLE profiles.prompts
     question TEXT,
     answer TEXT,
     PRIMARY KEY (id),
-    FOREIGN KEY (user_id) REFERENCES profiles (user_id)
+    FOREIGN KEY (user_id) REFERENCES profiles.profiles (user_id)
 );
