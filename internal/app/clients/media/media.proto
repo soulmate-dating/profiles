@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package media;
+option go_package = "github.com/soulmate-dating/media/internal/ports/grpc";
+
+service MediaService {
+  rpc UploadFile(UploadFileRequest) returns (UploadFileResponse) {}
+}
+
+message UploadFileRequest {
+  string contentType = 1;
+  bytes data = 2;
+}
+
+message UploadFileResponse {
+  string link = 1;
+}

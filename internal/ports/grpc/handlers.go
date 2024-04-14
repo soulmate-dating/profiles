@@ -102,8 +102,9 @@ func (s *ProfileService) AddPrompts(ctx context.Context, request *AddPromptsRequ
 		prompts[i] = models.Prompt{
 			UserId:   userId,
 			Question: p.GetQuestion(),
-			Answer:   p.GetAnswer(),
+			Content:  p.GetContent(),
 			Position: p.GetPosition(),
+			Type:     models.Text,
 		}
 	}
 
@@ -128,8 +129,9 @@ func (s *ProfileService) UpdatePrompt(ctx context.Context, request *UpdatePrompt
 		ID:       promptId,
 		UserId:   userId,
 		Question: promptInfo.GetQuestion(),
-		Answer:   promptInfo.GetAnswer(),
+		Content:  promptInfo.GetContent(),
 		Position: promptInfo.GetPosition(),
+		Type:     models.ContentType(promptInfo.GetType()),
 	}
 	prompt, err := s.app.UpdatePrompt(ctx, &p)
 	if err != nil {
@@ -155,4 +157,47 @@ func (s *ProfileService) UpdatePromptsPositions(ctx context.Context, request *Up
 		return nil, status.Error(GetErrorCode(err), err.Error())
 	}
 	return PromptsSuccessResponse(request.GetUserId(), prompts), nil
+}
+
+func (s *ProfileService) AddFilePrompt(ctx context.Context, request *AddFilePromptRequest) (*SinglePromptResponse, error) {
+	userId, err := uuid.Parse(request.GetUserId())
+	if err != nil {
+		return nil, status.Error(GetErrorCode(err), err.Error())
+	}
+	filePrompt := models.FilePrompt{
+		UserId:   userId,
+		Question: request.GetQuestion(),
+		Content:  request.GetContent(),
+		Position: request.GetPosition(),
+		Type:     models.Image,
+	}
+	prompt, err := s.app.AddFilePrompt(ctx, filePrompt)
+	if err != nil {
+		return nil, status.Error(GetErrorCode(err), err.Error())
+	}
+	return SinglePromptSuccessResponse(prompt), nil
+}
+
+func (s *ProfileService) UpdateFilePrompt(ctx context.Context, request *UpdateFilePromptRequest) (*SinglePromptResponse, error) {
+	userId, err := uuid.Parse(request.GetUserId())
+	if err != nil {
+		return nil, status.Error(GetErrorCode(err), err.Error())
+	}
+	promptId, err := uuid.Parse(request.GetId())
+	if err != nil {
+		return nil, status.Error(GetErrorCode(err), err.Error())
+	}
+	filePrompt := models.FilePrompt{
+		ID:       promptId,
+		UserId:   userId,
+		Question: request.GetQuestion(),
+		Content:  request.GetContent(),
+		Position: request.GetPosition(),
+		Type:     models.Image,
+	}
+	prompt, err := s.app.UpdateFilePrompt(ctx, filePrompt)
+	if err != nil {
+		return nil, status.Error(GetErrorCode(err), err.Error())
+	}
+	return SinglePromptSuccessResponse(prompt), nil
 }

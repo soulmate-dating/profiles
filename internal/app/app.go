@@ -3,6 +3,8 @@ package app
 import (
 	"context"
 	"fmt"
+	"github.com/soulmate-dating/profiles/internal/app/clients/media"
+	"log"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -27,6 +29,8 @@ type App interface {
 	UpdatePrompt(ctx context.Context, prompt *models.Prompt) (*models.Prompt, error)
 	UpdatePromptsPositions(ctx context.Context, prompts []models.Prompt) ([]models.Prompt, error)
 	GetMultipleProfiles(ctx context.Context, ids []string) ([]models.Profile, error)
+	AddFilePrompt(ctx context.Context, prompt models.FilePrompt) (*models.Prompt, error)
+	UpdateFilePrompt(ctx context.Context, prompt models.FilePrompt) (*models.Prompt, error)
 }
 
 type Repository interface {
@@ -45,7 +49,50 @@ type Repository interface {
 }
 
 type Application struct {
-	repository Repository
+	repository  Repository
+	mediaClient media.MediaServiceClient
+}
+
+func (a *Application) UpdateFilePrompt(ctx context.Context, filePrompt models.FilePrompt) (*models.Prompt, error) {
+	response, err := a.mediaClient.UploadFile(ctx, &media.UploadFileRequest{
+		ContentType: "image/png",
+		Data:        filePrompt.Content,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	prompt := &models.Prompt{
+		ID:       filePrompt.ID,
+		UserId:   filePrompt.UserId,
+		Question: filePrompt.Question,
+		Content:  response.GetLink(),
+		Position: filePrompt.Position,
+		Type:     filePrompt.Type,
+	}
+	prompt, err = a.repository.UpdatePromptContent(ctx, prompt)
+	return prompt, err
+}
+
+func (a *Application) AddFilePrompt(ctx context.Context, filePrompt models.FilePrompt) (*models.Prompt, error) {
+	response, err := a.mediaClient.UploadFile(ctx, &media.UploadFileRequest{
+		ContentType: "image/png",
+		Data:        filePrompt.Content,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	prompt := models.Prompt{
+		ID:       models.NewUID(),
+		UserId:   filePrompt.UserId,
+		Question: filePrompt.Question,
+		Content:  response.GetLink(),
+		Position: filePrompt.Position,
+		Type:     filePrompt.Type,
+	}
+	err = a.repository.CreatePrompt(ctx, prompt)
+	return &prompt, err
 }
 
 func (a *Application) GetFullProfile(ctx context.Context, userId string) (*models.FullProfile, error) {
@@ -166,5 +213,9 @@ func (a *Application) UpdatePromptsPositions(ctx context.Context, prompts []mode
 
 func NewApp(conn *pgxpool.Pool) App {
 	repo := postgres.NewRepo(conn)
-	return &Application{repository: repo}
+	mediaClient, err := media.NewServiceClient()
+	if err != nil {
+		log.Fatalf("could not connect to media service: %s", err.Error())
+	}
+	return &Application{repository: repo, mediaClient: mediaClient}
 }

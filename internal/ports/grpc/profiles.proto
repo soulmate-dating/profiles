@@ -13,6 +13,8 @@ service ProfileService {
 
   rpc GetPrompts(GetPromptsRequest) returns (PromptsResponse) {}
   rpc AddPrompts(AddPromptsRequest) returns (PromptsResponse) {}
+  rpc AddFilePrompt(AddFilePromptRequest) returns (SinglePromptResponse) {}
+  rpc UpdateFilePrompt(UpdateFilePromptRequest) returns (SinglePromptResponse) {}
   rpc UpdatePrompt(UpdatePromptRequest) returns (SinglePromptResponse) {}
   rpc UpdatePromptsPositions(UpdatePromptsPositionsRequest) returns (PromptsResponse) {}
 }
@@ -36,8 +38,9 @@ message PersonalInfo {
 message Prompt {
   string id = 1;
   string question = 2;
-  string answer = 3;
+  string content = 3;
   int32 position = 4;
+  string type = 5;
 }
 
 message PromptPosition {
@@ -109,4 +112,21 @@ message FullProfileResponse {
   string user_id = 1;
   PersonalInfo personal_info = 2;
   repeated Prompt prompts = 3;
+}
+
+message AddFilePromptRequest {
+  string user_id = 1;
+  string question = 2;
+  bytes content = 3;
+  string type = 4;
+  int32 position = 5;
+}
+
+message UpdateFilePromptRequest {
+  string id = 1;
+  string user_id = 2;
+  string question = 3;
+  bytes content = 4;
+  string type = 5;
+  int32 position = 6;
 }
