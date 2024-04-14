@@ -121,7 +121,7 @@ func (r *Repo) CreatePrompt(ctx context.Context, prompt models.Prompt) error {
 func (r *Repo) UpdatePromptContent(ctx context.Context, prompt *models.Prompt) (*models.Prompt, error) {
 	var args []any
 	args = append(args,
-		prompt.ID, prompt.Question, prompt.Content,
+		prompt.ID, prompt.Question, prompt.Content, prompt.Position,
 	)
 	rows, err := r.pool.Query(ctx, updatePromptQuery, args...)
 	if err != nil {
