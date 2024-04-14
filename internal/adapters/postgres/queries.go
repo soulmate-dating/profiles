@@ -16,5 +16,5 @@ const (
 	getMultipleProfilesByIDsQuery           = `SELECT * FROM profiles.profiles WHERE user_id = ANY($1)`
 	createPromptQuery                       = `INSERT INTO profiles.prompts (id, user_id, question, content, type, position) VALUES ($1, $2, $3, $4, $5, $6)`
 	getPromptsQuery                         = `SELECT * FROM profiles.prompts WHERE user_id = $1 ORDER BY position ASC`
-	updatePromptQuery                       = `UPDATE profiles.prompts SET question = $2, answer = $3, position = $4 WHERE id = $1 RETURNING *`
+	updatePromptQuery                       = `UPDATE profiles.prompts SET question = $2, content = $3, position = $4 WHERE id = $1 RETURNING *`
 )
