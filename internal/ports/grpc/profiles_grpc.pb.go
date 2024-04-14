@@ -30,6 +30,8 @@ type ProfileServiceClient interface {
 	GetFullProfile(ctx context.Context, in *GetProfileRequest, opts ...grpc.CallOption) (*FullProfileResponse, error)
 	GetPrompts(ctx context.Context, in *GetPromptsRequest, opts ...grpc.CallOption) (*PromptsResponse, error)
 	AddPrompts(ctx context.Context, in *AddPromptsRequest, opts ...grpc.CallOption) (*PromptsResponse, error)
+	AddFilePrompt(ctx context.Context, in *AddFilePromptRequest, opts ...grpc.CallOption) (*SinglePromptResponse, error)
+	UpdateFilePrompt(ctx context.Context, in *UpdateFilePromptRequest, opts ...grpc.CallOption) (*SinglePromptResponse, error)
 	UpdatePrompt(ctx context.Context, in *UpdatePromptRequest, opts ...grpc.CallOption) (*SinglePromptResponse, error)
 	UpdatePromptsPositions(ctx context.Context, in *UpdatePromptsPositionsRequest, opts ...grpc.CallOption) (*PromptsResponse, error)
 }
@@ -114,6 +116,24 @@ func (c *profileServiceClient) AddPrompts(ctx context.Context, in *AddPromptsReq
 	return out, nil
 }
 
+func (c *profileServiceClient) AddFilePrompt(ctx context.Context, in *AddFilePromptRequest, opts ...grpc.CallOption) (*SinglePromptResponse, error) {
+	out := new(SinglePromptResponse)
+	err := c.cc.Invoke(ctx, "/profiles.ProfileService/AddFilePrompt", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *profileServiceClient) UpdateFilePrompt(ctx context.Context, in *UpdateFilePromptRequest, opts ...grpc.CallOption) (*SinglePromptResponse, error) {
+	out := new(SinglePromptResponse)
+	err := c.cc.Invoke(ctx, "/profiles.ProfileService/UpdateFilePrompt", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *profileServiceClient) UpdatePrompt(ctx context.Context, in *UpdatePromptRequest, opts ...grpc.CallOption) (*SinglePromptResponse, error) {
 	out := new(SinglePromptResponse)
 	err := c.cc.Invoke(ctx, "/profiles.ProfileService/UpdatePrompt", in, out, opts...)
@@ -144,6 +164,8 @@ type ProfileServiceServer interface {
 	GetFullProfile(context.Context, *GetProfileRequest) (*FullProfileResponse, error)
 	GetPrompts(context.Context, *GetPromptsRequest) (*PromptsResponse, error)
 	AddPrompts(context.Context, *AddPromptsRequest) (*PromptsResponse, error)
+	AddFilePrompt(context.Context, *AddFilePromptRequest) (*SinglePromptResponse, error)
+	UpdateFilePrompt(context.Context, *UpdateFilePromptRequest) (*SinglePromptResponse, error)
 	UpdatePrompt(context.Context, *UpdatePromptRequest) (*SinglePromptResponse, error)
 	UpdatePromptsPositions(context.Context, *UpdatePromptsPositionsRequest) (*PromptsResponse, error)
 	mustEmbedUnimplementedProfileServiceServer()
@@ -176,6 +198,12 @@ func (UnimplementedProfileServiceServer) GetPrompts(context.Context, *GetPrompts
 }
 func (UnimplementedProfileServiceServer) AddPrompts(context.Context, *AddPromptsRequest) (*PromptsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddPrompts not implemented")
+}
+func (UnimplementedProfileServiceServer) AddFilePrompt(context.Context, *AddFilePromptRequest) (*SinglePromptResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddFilePrompt not implemented")
+}
+func (UnimplementedProfileServiceServer) UpdateFilePrompt(context.Context, *UpdateFilePromptRequest) (*SinglePromptResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateFilePrompt not implemented")
 }
 func (UnimplementedProfileServiceServer) UpdatePrompt(context.Context, *UpdatePromptRequest) (*SinglePromptResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdatePrompt not implemented")
@@ -340,6 +368,42 @@ func _ProfileService_AddPrompts_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ProfileService_AddFilePrompt_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddFilePromptRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProfileServiceServer).AddFilePrompt(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/profiles.ProfileService/AddFilePrompt",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProfileServiceServer).AddFilePrompt(ctx, req.(*AddFilePromptRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProfileService_UpdateFilePrompt_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateFilePromptRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProfileServiceServer).UpdateFilePrompt(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/profiles.ProfileService/UpdateFilePrompt",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProfileServiceServer).UpdateFilePrompt(ctx, req.(*UpdateFilePromptRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ProfileService_UpdatePrompt_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdatePromptRequest)
 	if err := dec(in); err != nil {
@@ -414,6 +478,14 @@ var ProfileService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AddPrompts",
 			Handler:    _ProfileService_AddPrompts_Handler,
+		},
+		{
+			MethodName: "AddFilePrompt",
+			Handler:    _ProfileService_AddFilePrompt_Handler,
+		},
+		{
+			MethodName: "UpdateFilePrompt",
+			Handler:    _ProfileService_UpdateFilePrompt_Handler,
 		},
 		{
 			MethodName: "UpdatePrompt",

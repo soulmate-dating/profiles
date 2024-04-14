@@ -27,17 +27,20 @@ CREATE TABLE profiles.profiles
     family_plans      TEXT,
     location          TEXT,
     drinks_alcohol    HABIT,
-    smokes HABIT,
+    smokes            HABIT,
     PRIMARY KEY (user_id)
 );
 
+CREATE TYPE PROMPT_TYPE AS ENUM ('text', 'image');
+
 CREATE TABLE profiles.prompts
 (
-    id uuid,
-    user_id uuid,
+    id       uuid,
+    user_id  uuid,
     position INTEGER,
     question TEXT,
-    answer TEXT,
+    content  TEXT,
+    type     PROMPT_TYPE,
     PRIMARY KEY (id),
     FOREIGN KEY (user_id) REFERENCES profiles.profiles (user_id)
 );

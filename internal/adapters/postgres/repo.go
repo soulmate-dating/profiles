@@ -110,7 +110,7 @@ func (r *Repo) GetPromptsByUser(ctx context.Context, userId string) ([]models.Pr
 func (r *Repo) CreatePrompt(ctx context.Context, prompt models.Prompt) error {
 	var args []any
 	args = append(args,
-		prompt.ID, prompt.UserId, prompt.Question, prompt.Answer, prompt.Position,
+		prompt.ID, prompt.UserId, prompt.Question, prompt.Content, prompt.Type, prompt.Position,
 	)
 	if _, err := r.pool.Exec(ctx, createPromptQuery, args...); err != nil {
 		return fmt.Errorf("create prompt: %w", err)
@@ -121,7 +121,7 @@ func (r *Repo) CreatePrompt(ctx context.Context, prompt models.Prompt) error {
 func (r *Repo) UpdatePromptContent(ctx context.Context, prompt *models.Prompt) (*models.Prompt, error) {
 	var args []any
 	args = append(args,
-		prompt.ID, prompt.Question, prompt.Answer,
+		prompt.ID, prompt.Question, prompt.Content,
 	)
 	rows, err := r.pool.Query(ctx, updatePromptQuery, args...)
 	if err != nil {
