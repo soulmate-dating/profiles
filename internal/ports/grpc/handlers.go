@@ -177,3 +177,27 @@ func (s *ProfileService) AddFilePrompt(ctx context.Context, request *AddFileProm
 	}
 	return SinglePromptSuccessResponse(prompt), nil
 }
+
+func (s *ProfileService) UpdateFilePrompt(ctx context.Context, request *UpdateFilePromptRequest) (*SinglePromptResponse, error) {
+	userId, err := uuid.Parse(request.GetUserId())
+	if err != nil {
+		return nil, status.Error(GetErrorCode(err), err.Error())
+	}
+	promptId, err := uuid.Parse(request.GetId())
+	if err != nil {
+		return nil, status.Error(GetErrorCode(err), err.Error())
+	}
+	filePrompt := models.FilePrompt{
+		ID:       promptId,
+		UserId:   userId,
+		Question: request.GetQuestion(),
+		Content:  request.GetContent(),
+		Position: request.GetPosition(),
+		Type:     models.Image,
+	}
+	prompt, err := s.app.UpdateFilePrompt(ctx, filePrompt)
+	if err != nil {
+		return nil, status.Error(GetErrorCode(err), err.Error())
+	}
+	return SinglePromptSuccessResponse(prompt), nil
+}

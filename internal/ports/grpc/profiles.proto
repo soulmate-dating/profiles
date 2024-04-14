@@ -123,8 +123,8 @@ message AddFilePromptRequest {
 }
 
 message UpdateFilePromptRequest {
-  string user_id = 1;
-  string prompt_id = 2;
+  string id = 1;
+  string user_id = 2;
   string question = 3;
   bytes content = 4;
   string type = 5;

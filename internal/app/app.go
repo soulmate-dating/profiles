@@ -30,6 +30,7 @@ type App interface {
 	UpdatePromptsPositions(ctx context.Context, prompts []models.Prompt) ([]models.Prompt, error)
 	GetMultipleProfiles(ctx context.Context, ids []string) ([]models.Profile, error)
 	AddFilePrompt(ctx context.Context, prompt models.FilePrompt) (*models.Prompt, error)
+	UpdateFilePrompt(ctx context.Context, prompt models.FilePrompt) (*models.Prompt, error)
 }
 
 type Repository interface {
@@ -50,6 +51,27 @@ type Repository interface {
 type Application struct {
 	repository  Repository
 	mediaClient media.MediaServiceClient
+}
+
+func (a *Application) UpdateFilePrompt(ctx context.Context, filePrompt models.FilePrompt) (*models.Prompt, error) {
+	response, err := a.mediaClient.UploadFile(ctx, &media.UploadFileRequest{
+		ContentType: "image/png",
+		Data:        filePrompt.Content,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	prompt := &models.Prompt{
+		ID:       filePrompt.ID,
+		UserId:   filePrompt.UserId,
+		Question: filePrompt.Question,
+		Content:  response.GetLink(),
+		Position: filePrompt.Position,
+		Type:     filePrompt.Type,
+	}
+	prompt, err = a.repository.UpdatePromptContent(ctx, prompt)
+	return prompt, err
 }
 
 func (a *Application) AddFilePrompt(ctx context.Context, filePrompt models.FilePrompt) (*models.Prompt, error) {
