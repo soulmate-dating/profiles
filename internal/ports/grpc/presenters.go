@@ -64,6 +64,7 @@ func PromptsSuccessResponse(userId string, prompts []models.Prompt) *PromptsResp
 			Question: p.Question,
 			Content:  p.Content,
 			Position: p.Position,
+			Type:     string(p.Type),
 		}
 	}
 	return &PromptsResponse{UserId: userId, Prompts: res}
@@ -77,6 +78,7 @@ func SinglePromptSuccessResponse(p *models.Prompt) *SinglePromptResponse {
 			Question: p.Question,
 			Content:  p.Content,
 			Position: p.Position,
+			Type:     string(p.Type),
 		},
 	}
 }
@@ -90,6 +92,7 @@ func FullProfileSuccessResponse(fp *models.FullProfile) *FullProfileResponse {
 			Question: p.Question,
 			Content:  p.Content,
 			Position: p.Position,
+			Type:     string(p.Type),
 		}
 	}
 	profile := fp.Profile
