@@ -3,7 +3,8 @@ package grpc
 import (
 	"context"
 	"github.com/google/uuid"
-	"github.com/soulmate-dating/profiles/internal/models"
+	"github.com/soulmate-dating/profiles/internal/domain"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"strings"
 )
@@ -21,7 +22,11 @@ func (s *ProfileService) CreateProfile(ctx context.Context, request *CreateProfi
 }
 
 func (s *ProfileService) GetProfile(ctx context.Context, request *GetProfileRequest) (*ProfileResponse, error) {
-	profile, err := s.app.GetProfile(ctx, request.GetId())
+	userId, err := uuid.Parse(request.GetId())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	profile, err := s.app.GetProfile(ctx, userId)
 	if err != nil {
 		return nil, status.Error(GetErrorCode(err), err.Error())
 	}
@@ -30,15 +35,15 @@ func (s *ProfileService) GetProfile(ctx context.Context, request *GetProfileRequ
 
 func (s *ProfileService) UpdateProfile(ctx context.Context, request *UpdateProfileRequest) (*ProfileResponse, error) {
 	info := request.GetPersonalInfo()
-	birthDate, err := models.ParseDate(info.GetBirthDate())
+	birthDate, err := domain.ParseDate(info.GetBirthDate())
 	if err != nil {
-		return nil, status.Error(GetErrorCode(err), err.Error())
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	userId, err := uuid.Parse(request.GetId())
 	if err != nil {
-		return nil, status.Error(GetErrorCode(err), err.Error())
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-	p := models.Profile{
+	p := domain.Profile{
 		UserId:           userId,
 		FirstName:        info.GetFirstName(),
 		LastName:         info.GetLastName(),
@@ -53,7 +58,7 @@ func (s *ProfileService) UpdateProfile(ctx context.Context, request *UpdateProfi
 		DrinksAlcohol:    strings.ToLower(info.GetDrinksAlcohol()),
 		Smokes:           strings.ToLower(info.GetSmokes()),
 	}
-	profile, err := s.app.UpdateProfile(ctx, &p)
+	profile, err := s.app.UpdateProfile(ctx, p)
 	if err != nil {
 		return nil, status.Error(GetErrorCode(err), err.Error())
 	}
@@ -61,7 +66,15 @@ func (s *ProfileService) UpdateProfile(ctx context.Context, request *UpdateProfi
 }
 
 func (s *ProfileService) GetMultipleProfiles(ctx context.Context, request *GetMultipleProfilesRequest) (*MultipleProfilesResponse, error) {
-	profiles, err := s.app.GetMultipleProfiles(ctx, request.GetIds())
+	userIDs := make([]uuid.UUID, len(request.GetIds()))
+	for i, id := range request.GetIds() {
+		userId, err := uuid.Parse(id)
+		if err != nil {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+		userIDs[i] = userId
+	}
+	profiles, err := s.app.GetMultipleProfiles(ctx, userIDs)
 	if err != nil {
 		return nil, status.Error(GetErrorCode(err), err.Error())
 	}
@@ -69,7 +82,11 @@ func (s *ProfileService) GetMultipleProfiles(ctx context.Context, request *GetMu
 }
 
 func (s *ProfileService) GetRandomProfilePreferredByUser(ctx context.Context, request *GetRandomProfilePreferredByUserRequest) (*FullProfileResponse, error) {
-	profile, err := s.app.GetRandomProfilePreferredByUser(ctx, request.GetUserId())
+	userId, err := uuid.Parse(request.GetUserId())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	profile, err := s.app.GetRandomProfilePreferredByUser(ctx, userId)
 	if err != nil {
 		return nil, status.Error(GetErrorCode(err), err.Error())
 	}
@@ -77,7 +94,11 @@ func (s *ProfileService) GetRandomProfilePreferredByUser(ctx context.Context, re
 }
 
 func (s *ProfileService) GetFullProfile(ctx context.Context, request *GetProfileRequest) (*FullProfileResponse, error) {
-	profile, err := s.app.GetFullProfile(ctx, request.GetId())
+	userId, err := uuid.Parse(request.GetId())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	profile, err := s.app.GetFullProfile(ctx, userId)
 	if err != nil {
 		return nil, status.Error(GetErrorCode(err), err.Error())
 	}
@@ -85,7 +106,11 @@ func (s *ProfileService) GetFullProfile(ctx context.Context, request *GetProfile
 }
 
 func (s *ProfileService) GetPrompts(ctx context.Context, request *GetPromptsRequest) (*PromptsResponse, error) {
-	prompts, err := s.app.GetPrompts(ctx, request.GetUserId())
+	userId, err := uuid.Parse(request.GetUserId())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	prompts, err := s.app.GetPrompts(ctx, userId)
 	if err != nil {
 		return nil, status.Error(GetErrorCode(err), err.Error())
 	}
@@ -93,18 +118,18 @@ func (s *ProfileService) GetPrompts(ctx context.Context, request *GetPromptsRequ
 }
 
 func (s *ProfileService) AddPrompts(ctx context.Context, request *AddPromptsRequest) (*PromptsResponse, error) {
-	prompts := make([]models.Prompt, len(request.GetPrompts()))
+	prompts := make([]domain.Prompt, len(request.GetPrompts()))
 	userId, err := uuid.Parse(request.GetUserId())
 	if err != nil {
 		return nil, status.Error(GetErrorCode(err), err.Error())
 	}
 	for i, p := range request.GetPrompts() {
-		prompts[i] = models.Prompt{
+		prompts[i] = domain.Prompt{
 			UserId:   userId,
 			Question: p.GetQuestion(),
 			Content:  p.GetContent(),
 			Position: p.GetPosition(),
-			Type:     models.Text,
+			Type:     domain.Text,
 		}
 	}
 
@@ -125,15 +150,15 @@ func (s *ProfileService) UpdatePrompt(ctx context.Context, request *UpdatePrompt
 	if err != nil {
 		return nil, status.Error(GetErrorCode(err), err.Error())
 	}
-	p := models.Prompt{
+	p := domain.Prompt{
 		ID:       promptId,
 		UserId:   userId,
 		Question: promptInfo.GetQuestion(),
 		Content:  promptInfo.GetContent(),
 		Position: promptInfo.GetPosition(),
-		Type:     models.ContentType(promptInfo.GetType()),
+		Type:     domain.ContentType(promptInfo.GetType()),
 	}
-	prompt, err := s.app.UpdatePrompt(ctx, &p)
+	prompt, err := s.app.UpdatePrompt(ctx, p)
 	if err != nil {
 		return nil, status.Error(GetErrorCode(err), err.Error())
 	}
@@ -141,13 +166,13 @@ func (s *ProfileService) UpdatePrompt(ctx context.Context, request *UpdatePrompt
 }
 
 func (s *ProfileService) UpdatePromptsPositions(ctx context.Context, request *UpdatePromptsPositionsRequest) (*PromptsResponse, error) {
-	prompts := make([]models.Prompt, len(request.GetPromptPositions()))
+	prompts := make([]domain.Prompt, len(request.GetPromptPositions()))
 	userId, err := uuid.Parse(request.GetUserId())
 	if err != nil {
 		return nil, status.Error(GetErrorCode(err), err.Error())
 	}
 	for i, p := range request.GetPromptPositions() {
-		prompts[i] = models.Prompt{
+		prompts[i] = domain.Prompt{
 			UserId:   userId,
 			Position: p.GetPosition(),
 		}
@@ -164,12 +189,12 @@ func (s *ProfileService) AddFilePrompt(ctx context.Context, request *AddFileProm
 	if err != nil {
 		return nil, status.Error(GetErrorCode(err), err.Error())
 	}
-	filePrompt := models.FilePrompt{
+	filePrompt := domain.FilePrompt{
 		UserId:   userId,
 		Question: request.GetQuestion(),
 		Content:  request.GetContent(),
 		Position: request.GetPosition(),
-		Type:     models.Image,
+		Type:     domain.Image,
 	}
 	prompt, err := s.app.AddFilePrompt(ctx, filePrompt)
 	if err != nil {
@@ -187,13 +212,13 @@ func (s *ProfileService) UpdateFilePrompt(ctx context.Context, request *UpdateFi
 	if err != nil {
 		return nil, status.Error(GetErrorCode(err), err.Error())
 	}
-	filePrompt := models.FilePrompt{
+	filePrompt := domain.FilePrompt{
 		ID:       promptId,
 		UserId:   userId,
 		Question: request.GetQuestion(),
 		Content:  request.GetContent(),
 		Position: request.GetPosition(),
-		Type:     models.Image,
+		Type:     domain.Image,
 	}
 	prompt, err := s.app.UpdateFilePrompt(ctx, filePrompt)
 	if err != nil {

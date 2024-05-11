@@ -3,57 +3,66 @@ package app
 import (
 	"context"
 	"fmt"
-	"github.com/soulmate-dating/profiles/internal/app/clients/media"
 	"log"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/soulmate-dating/profiles/internal/adapters/postgres"
-	"github.com/soulmate-dating/profiles/internal/models"
-)
-
-var (
-	ErrForbidden = fmt.Errorf("forbidden")
+	"github.com/soulmate-dating/profiles/internal/app/clients/media"
+	"github.com/soulmate-dating/profiles/internal/domain"
 )
 
 type App interface {
-	CreateProfile(ctx context.Context, profile *models.Profile) (*models.Profile, error)
-	GetProfile(ctx context.Context, userId string) (*models.Profile, error)
-	UpdateProfile(ctx context.Context, profile *models.Profile) (*models.Profile, error)
-	GetRandomProfilePreferredByUser(ctx context.Context, userId string) (*models.FullProfile, error)
-	GetFullProfile(ctx context.Context, userId string) (*models.FullProfile, error)
+	CreateProfile(ctx context.Context, profile *domain.Profile) (*domain.Profile, error)
+	GetProfile(ctx context.Context, userId uuid.UUID) (*domain.Profile, error)
+	UpdateProfile(ctx context.Context, profile domain.Profile) (*domain.Profile, error)
+	GetRandomProfilePreferredByUser(ctx context.Context, userId uuid.UUID) (*domain.FullProfile, error)
+	GetFullProfile(ctx context.Context, userId uuid.UUID) (*domain.FullProfile, error)
 
-	GetPrompts(ctx context.Context, userId string) ([]models.Prompt, error)
-	AddPrompts(ctx context.Context, prompts []models.Prompt) ([]models.Prompt, error)
-	UpdatePrompt(ctx context.Context, prompt *models.Prompt) (*models.Prompt, error)
-	UpdatePromptsPositions(ctx context.Context, prompts []models.Prompt) ([]models.Prompt, error)
-	GetMultipleProfiles(ctx context.Context, ids []string) ([]models.Profile, error)
-	AddFilePrompt(ctx context.Context, prompt models.FilePrompt) (*models.Prompt, error)
-	UpdateFilePrompt(ctx context.Context, prompt models.FilePrompt) (*models.Prompt, error)
+	GetPrompts(ctx context.Context, userId uuid.UUID) ([]domain.Prompt, error)
+	AddPrompts(ctx context.Context, prompts []domain.Prompt) ([]domain.Prompt, error)
+	UpdatePrompt(ctx context.Context, prompt domain.Prompt) (*domain.Prompt, error)
+	UpdatePromptsPositions(ctx context.Context, prompts []domain.Prompt) ([]domain.Prompt, error)
+	GetMultipleProfiles(ctx context.Context, ids []uuid.UUID) ([]domain.Profile, error)
+	AddFilePrompt(ctx context.Context, prompt domain.FilePrompt) (*domain.Prompt, error)
+	UpdateFilePrompt(ctx context.Context, prompt domain.FilePrompt) (*domain.Prompt, error)
 }
 
 type Repository interface {
-	CreateProfile(ctx context.Context, p *models.Profile) error
-	GetProfileByID(ctx context.Context, id string) (*models.Profile, error)
-	UpdateProfile(ctx context.Context, profile *models.Profile) (*models.Profile, error)
-	GetMultipleProfilesByIDs(ctx context.Context, ids []string) ([]models.Profile, error)
+	CreateProfile(ctx context.Context, p *domain.Profile) error
+	GetProfileByID(ctx context.Context, id uuid.UUID) (*domain.Profile, error)
+	UpdateProfile(ctx context.Context, profile domain.Profile) (*domain.Profile, error)
+	GetMultipleProfilesByIDs(ctx context.Context, ids []uuid.UUID) ([]domain.Profile, error)
 	GetRandomProfileBySexAndPreference(
-		ctx context.Context, requesterId uuid.UUID, preference models.Preference, sex string,
-	) (*models.Profile, error)
+		ctx context.Context, requesterId uuid.UUID, preference domain.Preference, sex string,
+	) (*domain.Profile, error)
 
-	GetPromptsByUser(ctx context.Context, userId string) ([]models.Prompt, error)
-	CreatePrompt(ctx context.Context, prompt models.Prompt) error
-	UpdatePromptContent(ctx context.Context, prompt *models.Prompt) (*models.Prompt, error)
-	UpdatePromptsPositions(ctx context.Context, prompts []models.Prompt) ([]models.Prompt, error)
+	GetPromptsByUser(ctx context.Context, userId uuid.UUID) ([]domain.Prompt, error)
+	GetPromptByID(ctx context.Context, id uuid.UUID) (*domain.Prompt, error)
+	GetPromptByUserQuestionAndType(ctx context.Context, prompt domain.Prompt) (*domain.Prompt, error)
+	CreatePrompt(ctx context.Context, prompt domain.Prompt) error
+	UpdatePromptContent(ctx context.Context, prompt domain.Prompt) (*domain.Prompt, error)
+	UpdatePromptsPositions(ctx context.Context, prompts []domain.Prompt) ([]domain.Prompt, error)
+}
+
+type TransactionManager interface {
+	RunInTx(ctx context.Context, f func(ctx context.Context) error) error
 }
 
 type Application struct {
+	validate    *validator.Validate
+	txManager   TransactionManager
 	repository  Repository
 	mediaClient media.MediaServiceClient
 }
 
-func (a *Application) UpdateFilePrompt(ctx context.Context, filePrompt models.FilePrompt) (*models.Prompt, error) {
+func (a *Application) UpdateFilePrompt(ctx context.Context, filePrompt domain.FilePrompt) (res *domain.Prompt, err error) {
+	err = a.validate.Struct(filePrompt)
+	if err != nil {
+		return nil, fmt.Errorf("invalid file prompt: %w", err)
+	}
 	response, err := a.mediaClient.UploadFile(ctx, &media.UploadFileRequest{
 		ContentType: "image/png",
 		Data:        filePrompt.Content,
@@ -62,7 +71,7 @@ func (a *Application) UpdateFilePrompt(ctx context.Context, filePrompt models.Fi
 		return nil, err
 	}
 
-	prompt := &models.Prompt{
+	prompt := domain.Prompt{
 		ID:       filePrompt.ID,
 		UserId:   filePrompt.UserId,
 		Question: filePrompt.Question,
@@ -70,11 +79,21 @@ func (a *Application) UpdateFilePrompt(ctx context.Context, filePrompt models.Fi
 		Position: filePrompt.Position,
 		Type:     filePrompt.Type,
 	}
-	prompt, err = a.repository.UpdatePromptContent(ctx, prompt)
-	return prompt, err
+	err = a.txManager.RunInTx(ctx, func(ctx context.Context) error {
+		res, err = a.updatePrompt(ctx, prompt)
+		if err != nil {
+			return fmt.Errorf("failed to update prompt: %w", err)
+		}
+		return nil
+	})
+	return res, err
 }
 
-func (a *Application) AddFilePrompt(ctx context.Context, filePrompt models.FilePrompt) (*models.Prompt, error) {
+func (a *Application) AddFilePrompt(ctx context.Context, filePrompt domain.FilePrompt) (*domain.Prompt, error) {
+	err := a.validate.Struct(filePrompt)
+	if err != nil {
+		return nil, fmt.Errorf("invalid file prompt: %w", err)
+	}
 	response, err := a.mediaClient.UploadFile(ctx, &media.UploadFileRequest{
 		ContentType: "image/png",
 		Data:        filePrompt.Content,
@@ -83,60 +102,88 @@ func (a *Application) AddFilePrompt(ctx context.Context, filePrompt models.FileP
 		return nil, err
 	}
 
-	prompt := models.Prompt{
-		ID:       models.NewUID(),
+	prompt := domain.Prompt{
+		ID:       domain.NewUID(),
 		UserId:   filePrompt.UserId,
 		Question: filePrompt.Question,
 		Content:  response.GetLink(),
 		Position: filePrompt.Position,
 		Type:     filePrompt.Type,
 	}
-	err = a.repository.CreatePrompt(ctx, prompt)
+	err = a.txManager.RunInTx(ctx, func(ctx context.Context) error {
+		err := a.addPrompt(ctx, prompt)
+		if err != nil {
+			return fmt.Errorf("failed to add prompt: %w", err)
+		}
+		return nil
+	})
 	return &prompt, err
 }
 
-func (a *Application) GetFullProfile(ctx context.Context, userId string) (*models.FullProfile, error) {
+func (a *Application) GetFullProfile(ctx context.Context, userId uuid.UUID) (profile *domain.FullProfile, err error) {
+	err = a.txManager.RunInTx(ctx, func(ctx context.Context) error {
+		profile, err = a.getFullProfile(ctx, userId)
+		if err != nil {
+			return fmt.Errorf("failed to get full profile: %w", err)
+		}
+		return nil
+	})
+	return profile, err
+}
+
+func (a *Application) getFullProfile(ctx context.Context, userId uuid.UUID) (*domain.FullProfile, error) {
 	profile, err := a.repository.GetProfileByID(ctx, userId)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get profile: %w", err)
 	}
 
-	prompts, err := a.repository.GetPromptsByUser(ctx, profile.UserId.String())
+	prompts, err := a.repository.GetPromptsByUser(ctx, profile.UserId)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get prompts: %w", err)
 	}
 
-	return &models.FullProfile{
+	return &domain.FullProfile{
 		Profile: *profile,
 		Prompts: prompts,
 	}, nil
 }
 
-func (a *Application) GetRandomProfilePreferredByUser(ctx context.Context, userId string) (*models.FullProfile, error) {
+func (a *Application) GetRandomProfilePreferredByUser(ctx context.Context, userId uuid.UUID) (profile *domain.FullProfile, err error) {
+	err = a.txManager.RunInTx(ctx, func(ctx context.Context) error {
+		profile, err = a.getRandomProfilePreferredByUser(ctx, userId)
+		if err != nil {
+			return fmt.Errorf("failed to get recommendation: %w", err)
+		}
+		return nil
+	})
+	return profile, err
+}
+
+func (a *Application) getRandomProfilePreferredByUser(ctx context.Context, userId uuid.UUID) (*domain.FullProfile, error) {
 	profile, err := a.repository.GetProfileByID(ctx, userId)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get profile: %w", err)
 	}
 
 	recommendedProfile, err := a.repository.GetRandomProfileBySexAndPreference(
-		ctx, profile.UserId, models.Preference(profile.PreferredPartner), profile.Sex,
+		ctx, profile.UserId, domain.Preference(profile.PreferredPartner), profile.Sex,
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get recommedation: %w", err)
 	}
 
-	prompts, err := a.repository.GetPromptsByUser(ctx, recommendedProfile.UserId.String())
+	prompts, err := a.repository.GetPromptsByUser(ctx, recommendedProfile.UserId)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get prompt for recommended profile: %w", err)
 	}
 
-	return &models.FullProfile{
+	return &domain.FullProfile{
 		Profile: *recommendedProfile,
 		Prompts: prompts,
 	}, nil
 }
 
-func (a *Application) GetMultipleProfiles(ctx context.Context, ids []string) ([]models.Profile, error) {
+func (a *Application) GetMultipleProfiles(ctx context.Context, ids []uuid.UUID) ([]domain.Profile, error) {
 	p, err := a.repository.GetMultipleProfilesByIDs(ctx, ids)
 	if err != nil {
 		return nil, err
@@ -145,8 +192,28 @@ func (a *Application) GetMultipleProfiles(ctx context.Context, ids []string) ([]
 	return p, nil
 }
 
-func (a *Application) CreateProfile(ctx context.Context, profile *models.Profile) (*models.Profile, error) {
-	err := a.repository.CreateProfile(ctx, profile)
+func (a *Application) CreateProfile(ctx context.Context, profile *domain.Profile) (res *domain.Profile, err error) {
+	err = a.validate.Struct(profile)
+	if err != nil {
+		return nil, fmt.Errorf("invalid profile: %w", err)
+	}
+
+	err = a.txManager.RunInTx(ctx, func(ctx context.Context) error {
+		res, err = a.createProfile(ctx, profile)
+		if err != nil {
+			return fmt.Errorf("failed to create profile: %w", err)
+		}
+		return nil
+	})
+	return res, err
+}
+
+func (a *Application) createProfile(ctx context.Context, profile *domain.Profile) (*domain.Profile, error) {
+	_, err := a.repository.GetProfileByID(ctx, profile.UserId)
+	if err == nil {
+		return nil, domain.ErrIDAlreadyExists
+	}
+	err = a.repository.CreateProfile(ctx, profile)
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +221,7 @@ func (a *Application) CreateProfile(ctx context.Context, profile *models.Profile
 	return profile, nil
 }
 
-func (a *Application) GetProfile(ctx context.Context, userId string) (*models.Profile, error) {
+func (a *Application) GetProfile(ctx context.Context, userId uuid.UUID) (*domain.Profile, error) {
 	p, err := a.repository.GetProfileByID(ctx, userId)
 	if err != nil {
 		return nil, err
@@ -163,8 +230,32 @@ func (a *Application) GetProfile(ctx context.Context, userId string) (*models.Pr
 	return p, nil
 }
 
-func (a *Application) UpdateProfile(ctx context.Context, profile *models.Profile) (*models.Profile, error) {
-	p, err := a.repository.UpdateProfile(ctx, profile)
+func (a *Application) UpdateProfile(ctx context.Context, profile domain.Profile) (res *domain.Profile, err error) {
+	err = a.validate.Struct(profile)
+	if err != nil {
+		return nil, fmt.Errorf("invalid profile: %w", err)
+	}
+	err = a.txManager.RunInTx(ctx, func(ctx context.Context) error {
+		res, err = a.updateProfile(ctx, profile)
+		if err != nil {
+			return fmt.Errorf("failed to update profile: %w", err)
+		}
+		return nil
+	})
+	return res, err
+}
+
+func (a *Application) updateProfile(ctx context.Context, profile domain.Profile) (*domain.Profile, error) {
+	p, err := a.repository.GetProfileByID(ctx, profile.UserId)
+	if err != nil {
+		return nil, fmt.Errorf("get profile: %w", err)
+	}
+
+	if p.UserId.String() != profile.UserId.String() {
+		return nil, domain.ErrForbidden
+	}
+
+	p, err = a.repository.UpdateProfile(ctx, profile)
 	if err != nil {
 		return nil, err
 	}
@@ -172,7 +263,7 @@ func (a *Application) UpdateProfile(ctx context.Context, profile *models.Profile
 	return p, nil
 }
 
-func (a *Application) GetPrompts(ctx context.Context, userId string) ([]models.Prompt, error) {
+func (a *Application) GetPrompts(ctx context.Context, userId uuid.UUID) ([]domain.Prompt, error) {
 	prompts, err := a.repository.GetPromptsByUser(ctx, userId)
 	if err != nil {
 		return nil, err
@@ -181,10 +272,28 @@ func (a *Application) GetPrompts(ctx context.Context, userId string) ([]models.P
 	return prompts, nil
 }
 
-func (a *Application) AddPrompts(ctx context.Context, prompts []models.Prompt) ([]models.Prompt, error) {
+func (a *Application) AddPrompts(ctx context.Context, prompts []domain.Prompt) (res []domain.Prompt, err error) {
+	for _, prompt := range prompts {
+		err = a.validate.Struct(prompt)
+		if err != nil {
+			return nil, fmt.Errorf("invalid prompt: %w", err)
+		}
+	}
+
+	err = a.txManager.RunInTx(ctx, func(ctx context.Context) error {
+		res, err = a.addPrompts(ctx, prompts)
+		if err != nil {
+			return fmt.Errorf("failed to add prompts: %w", err)
+		}
+		return nil
+	})
+	return res, err
+}
+
+func (a *Application) addPrompts(ctx context.Context, prompts []domain.Prompt) ([]domain.Prompt, error) {
 	for i := range prompts {
-		prompts[i].ID = models.NewUID()
-		err := a.repository.CreatePrompt(ctx, prompts[i])
+		prompts[i].ID = domain.NewUID()
+		err := a.addPrompt(ctx, prompts[i])
 		if err != nil {
 			return nil, err
 		}
@@ -193,16 +302,63 @@ func (a *Application) AddPrompts(ctx context.Context, prompts []models.Prompt) (
 	return prompts, nil
 }
 
-func (a *Application) UpdatePrompt(ctx context.Context, prompt *models.Prompt) (*models.Prompt, error) {
-	prompt, err := a.repository.UpdatePromptContent(ctx, prompt)
-	if err != nil {
-		return nil, err
+func (a *Application) addPrompt(ctx context.Context, prompt domain.Prompt) error {
+	_, err := a.repository.GetPromptByID(ctx, prompt.ID)
+	if err == nil {
+		return domain.ErrIDAlreadyExists
 	}
 
-	return prompt, nil
+	_, err = a.repository.GetPromptByUserQuestionAndType(ctx, prompt)
+	if err == nil {
+		return domain.ErrNotUnique
+	}
+
+	err = a.repository.CreatePrompt(ctx, prompt)
+	if err != nil {
+		return fmt.Errorf("create prompt: %w", err)
+	}
+	return nil
 }
 
-func (a *Application) UpdatePromptsPositions(ctx context.Context, prompts []models.Prompt) ([]models.Prompt, error) {
+func (a *Application) UpdatePrompt(ctx context.Context, prompt domain.Prompt) (res *domain.Prompt, err error) {
+	err = a.validate.Struct(prompt)
+	if err != nil {
+		return nil, fmt.Errorf("invalid prompt: %w", err)
+	}
+	err = a.txManager.RunInTx(ctx, func(ctx context.Context) error {
+		res, err = a.updatePrompt(ctx, prompt)
+		if err != nil {
+			return fmt.Errorf("failed to update prompt: %w", err)
+		}
+		return nil
+	})
+	return res, err
+}
+
+func (a *Application) updatePrompt(ctx context.Context, prompt domain.Prompt) (*domain.Prompt, error) {
+	p, err := a.repository.GetPromptByID(ctx, prompt.ID)
+	if err != nil {
+		return nil, fmt.Errorf("get prompt: %w", err)
+	}
+
+	if p.UserId.String() != prompt.UserId.String() {
+		return nil, domain.ErrForbidden
+	}
+
+	p, err = a.repository.GetPromptByUserQuestionAndType(ctx, prompt)
+	if err == nil && p.ID.String() != prompt.ID.String() {
+		return nil, domain.ErrNotUnique
+	}
+
+	p, err = a.repository.UpdatePromptContent(ctx, prompt)
+	if err != nil {
+		return nil, fmt.Errorf("update prompt: %w", err)
+	}
+
+	return p, nil
+}
+
+func (a *Application) UpdatePromptsPositions(ctx context.Context, prompts []domain.Prompt) ([]domain.Prompt, error) {
 	prompts, err := a.repository.UpdatePromptsPositions(ctx, prompts)
 	if err != nil {
 		return nil, err
@@ -212,10 +368,12 @@ func (a *Application) UpdatePromptsPositions(ctx context.Context, prompts []mode
 }
 
 func NewApp(conn *pgxpool.Pool) App {
-	repo := postgres.NewRepo(conn)
+	pool := postgres.NewPool(conn)
+	repo := postgres.NewRepo(pool)
+
 	mediaClient, err := media.NewServiceClient()
 	if err != nil {
 		log.Fatalf("could not connect to media service: %s", err.Error())
 	}
-	return &Application{repository: repo, mediaClient: mediaClient}
+	return &Application{repository: repo, mediaClient: mediaClient, txManager: pool, validate: validator.New()}
 }
