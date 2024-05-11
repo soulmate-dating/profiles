@@ -58,8 +58,11 @@ type Application struct {
 	mediaClient media.MediaServiceClient
 }
 
-func (a *Application) UpdateFilePrompt(ctx context.Context, filePrompt domain.FilePrompt) (*domain.Prompt, error) {
-	err := a.validate.Struct(filePrompt)
+func (a *Application) UpdateFilePrompt(ctx context.Context, filePrompt domain.FilePrompt) (res *domain.Prompt, err error) {
+	err = a.validate.Struct(filePrompt)
+	if err != nil {
+		return nil, fmt.Errorf("invalid file prompt: %w", err)
+	}
 	response, err := a.mediaClient.UploadFile(ctx, &media.UploadFileRequest{
 		ContentType: "image/png",
 		Data:        filePrompt.Content,
@@ -76,14 +79,20 @@ func (a *Application) UpdateFilePrompt(ctx context.Context, filePrompt domain.Fi
 		Position: filePrompt.Position,
 		Type:     filePrompt.Type,
 	}
-	res, err := a.updatePrompt(ctx, prompt)
+	err = a.txManager.RunInTx(ctx, func(ctx context.Context) error {
+		res, err = a.updatePrompt(ctx, prompt)
+		if err != nil {
+			return fmt.Errorf("failed to update prompt: %w", err)
+		}
+		return nil
+	})
 	return res, err
 }
 
 func (a *Application) AddFilePrompt(ctx context.Context, filePrompt domain.FilePrompt) (*domain.Prompt, error) {
 	err := a.validate.Struct(filePrompt)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("invalid file prompt: %w", err)
 	}
 	response, err := a.mediaClient.UploadFile(ctx, &media.UploadFileRequest{
 		ContentType: "image/png",
@@ -101,7 +110,13 @@ func (a *Application) AddFilePrompt(ctx context.Context, filePrompt domain.FileP
 		Position: filePrompt.Position,
 		Type:     filePrompt.Type,
 	}
-	err = a.addPrompt(ctx, prompt)
+	err = a.txManager.RunInTx(ctx, func(ctx context.Context) error {
+		err := a.addPrompt(ctx, prompt)
+		if err != nil {
+			return fmt.Errorf("failed to add prompt: %w", err)
+		}
+		return nil
+	})
 	return &prompt, err
 }
 
@@ -180,7 +195,7 @@ func (a *Application) GetMultipleProfiles(ctx context.Context, ids []uuid.UUID) 
 func (a *Application) CreateProfile(ctx context.Context, profile *domain.Profile) (res *domain.Profile, err error) {
 	err = a.validate.Struct(profile)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("invalid profile: %w", err)
 	}
 
 	err = a.txManager.RunInTx(ctx, func(ctx context.Context) error {
@@ -218,7 +233,7 @@ func (a *Application) GetProfile(ctx context.Context, userId uuid.UUID) (*domain
 func (a *Application) UpdateProfile(ctx context.Context, profile domain.Profile) (res *domain.Profile, err error) {
 	err = a.validate.Struct(profile)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("invalid profile: %w", err)
 	}
 	err = a.txManager.RunInTx(ctx, func(ctx context.Context) error {
 		res, err = a.updateProfile(ctx, profile)
@@ -261,7 +276,7 @@ func (a *Application) AddPrompts(ctx context.Context, prompts []domain.Prompt) (
 	for _, prompt := range prompts {
 		err = a.validate.Struct(prompt)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("invalid prompt: %w", err)
 		}
 	}
 
@@ -308,7 +323,7 @@ func (a *Application) addPrompt(ctx context.Context, prompt domain.Prompt) error
 func (a *Application) UpdatePrompt(ctx context.Context, prompt domain.Prompt) (res *domain.Prompt, err error) {
 	err = a.validate.Struct(prompt)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("invalid prompt: %w", err)
 	}
 	err = a.txManager.RunInTx(ctx, func(ctx context.Context) error {
 		res, err = a.updatePrompt(ctx, prompt)
