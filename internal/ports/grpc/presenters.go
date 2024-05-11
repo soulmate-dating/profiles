@@ -2,23 +2,22 @@ package grpc
 
 import (
 	"errors"
-	"github.com/TobbyMax/validator"
-	"github.com/google/uuid"
-	"github.com/soulmate-dating/profiles/internal/app"
-	"github.com/soulmate-dating/profiles/internal/models"
-	"google.golang.org/grpc/codes"
 	"strings"
+
+	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
+	"google.golang.org/grpc/codes"
+
+	"github.com/soulmate-dating/profiles/internal/domain"
 )
 
-var ErrMissingArgument = errors.New("required argument is missing")
-
-func ProfileSuccessResponse(p *models.Profile) *ProfileResponse {
+func ProfileSuccessResponse(p *domain.Profile) *ProfileResponse {
 	return &ProfileResponse{
 		Id: p.UserId.String(),
 		PersonalInfo: &PersonalInfo{
 			FirstName:        p.FirstName,
 			LastName:         p.LastName,
-			BirthDate:        p.BirthDate.Format(models.DateLayout),
+			BirthDate:        p.BirthDate.Format(domain.DateLayout),
 			Sex:              p.Sex,
 			PreferredPartner: p.PreferredPartner,
 			Intention:        p.Intention,
@@ -32,7 +31,7 @@ func ProfileSuccessResponse(p *models.Profile) *ProfileResponse {
 	}
 }
 
-func GetMultipleProfilesSuccessResponse(profiles []models.Profile) *MultipleProfilesResponse {
+func GetMultipleProfilesSuccessResponse(profiles []domain.Profile) *MultipleProfilesResponse {
 	res := make([]*ProfileResponse, len(profiles))
 	for i, p := range profiles {
 		res[i] = &ProfileResponse{
@@ -40,7 +39,7 @@ func GetMultipleProfilesSuccessResponse(profiles []models.Profile) *MultipleProf
 			PersonalInfo: &PersonalInfo{
 				FirstName:        p.FirstName,
 				LastName:         p.LastName,
-				BirthDate:        p.BirthDate.Format(models.DateLayout),
+				BirthDate:        p.BirthDate.Format(domain.DateLayout),
 				Sex:              p.Sex,
 				PreferredPartner: p.PreferredPartner,
 				Intention:        p.Intention,
@@ -56,7 +55,7 @@ func GetMultipleProfilesSuccessResponse(profiles []models.Profile) *MultipleProf
 	return &MultipleProfilesResponse{Profiles: res}
 }
 
-func PromptsSuccessResponse(userId string, prompts []models.Prompt) *PromptsResponse {
+func PromptsSuccessResponse(userId string, prompts []domain.Prompt) *PromptsResponse {
 	res := make([]*Prompt, len(prompts))
 	for i, p := range prompts {
 		res[i] = &Prompt{
@@ -69,7 +68,7 @@ func PromptsSuccessResponse(userId string, prompts []models.Prompt) *PromptsResp
 	return &PromptsResponse{UserId: userId, Prompts: res}
 }
 
-func SinglePromptSuccessResponse(p *models.Prompt) *SinglePromptResponse {
+func SinglePromptSuccessResponse(p *domain.Prompt) *SinglePromptResponse {
 	return &SinglePromptResponse{
 		UserId: p.UserId.String(),
 		Prompt: &Prompt{
@@ -81,7 +80,7 @@ func SinglePromptSuccessResponse(p *models.Prompt) *SinglePromptResponse {
 	}
 }
 
-func FullProfileSuccessResponse(fp *models.FullProfile) *FullProfileResponse {
+func FullProfileSuccessResponse(fp *domain.FullProfile) *FullProfileResponse {
 	prompts := fp.Prompts
 	res := make([]*Prompt, len(prompts))
 	for i, p := range prompts {
@@ -98,7 +97,7 @@ func FullProfileSuccessResponse(fp *models.FullProfile) *FullProfileResponse {
 		PersonalInfo: &PersonalInfo{
 			FirstName:        profile.FirstName,
 			LastName:         profile.LastName,
-			BirthDate:        profile.BirthDate.Format(models.DateLayout),
+			BirthDate:        profile.BirthDate.Format(domain.DateLayout),
 			Sex:              profile.Sex,
 			PreferredPartner: profile.PreferredPartner,
 			Intention:        profile.Intention,
@@ -113,17 +112,17 @@ func FullProfileSuccessResponse(fp *models.FullProfile) *FullProfileResponse {
 	}
 }
 
-func mapCreateProfileRequest(request *CreateProfileRequest) (*models.Profile, error) {
+func mapCreateProfileRequest(request *CreateProfileRequest) (*domain.Profile, error) {
 	info := request.GetPersonalInfo()
 	userId, err := uuid.Parse(request.GetId())
 	if err != nil {
 		return nil, err
 	}
-	birthDate, err := models.ParseDate(info.GetBirthDate())
+	birthDate, err := domain.ParseDate(info.GetBirthDate())
 	if err != nil {
 		return nil, err
 	}
-	return &models.Profile{
+	return &domain.Profile{
 		UserId:           userId,
 		FirstName:        info.GetFirstName(),
 		LastName:         info.GetLastName(),
@@ -144,7 +143,11 @@ func GetErrorCode(err error) codes.Code {
 	switch {
 	case errors.As(err, &validator.ValidationErrors{}):
 		return codes.InvalidArgument
-	case errors.Is(err, app.ErrForbidden):
+	case errors.Is(err, domain.ErrNotFound):
+		return codes.NotFound
+	case errors.Is(err, domain.ErrNotUnique) || errors.Is(err, domain.ErrIDAlreadyExists):
+		return codes.AlreadyExists
+	case errors.Is(err, domain.ErrForbidden):
 		return codes.PermissionDenied
 	}
 	return codes.Internal
