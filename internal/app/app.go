@@ -345,7 +345,7 @@ func (a *Application) updatePrompt(ctx context.Context, prompt domain.Prompt) (*
 		return nil, domain.ErrForbidden
 	}
 
-	_, err = a.repository.GetPromptByUserQuestionAndType(ctx, prompt)
+	p, err = a.repository.GetPromptByUserQuestionAndType(ctx, prompt)
 	if err == nil && p.ID.String() != prompt.ID.String() {
 		return nil, domain.ErrNotUnique
 	}
