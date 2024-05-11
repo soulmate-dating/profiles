@@ -1,4 +1,4 @@
-package models
+package domain
 
 import "github.com/google/uuid"
 
@@ -15,7 +15,7 @@ type Prompt struct {
 	Question string      `db:"question"`
 	Content  string      `db:"content"`
 	Position int32       `db:"position" validate:"min=0,max=10"`
-	Type     ContentType `db:"type" validate:"custom=validateEnum,validValues=image,text"`
+	Type     ContentType `db:"type" validate:"oneof=image text"`
 }
 
 type FilePrompt struct {
@@ -24,5 +24,5 @@ type FilePrompt struct {
 	Question string      `db:"question"`
 	Content  []byte      `db:"content"`
 	Position int32       `db:"position"`
-	Type     ContentType `db:"type"  validate:"custom=validateEnum,validValues=image,text"`
+	Type     ContentType `db:"type"  validate:"oneof=image text"`
 }
