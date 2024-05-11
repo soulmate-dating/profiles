@@ -11,7 +11,7 @@ CREATE TYPE INTENTION AS ENUM (
     );
 CREATE TYPE GENDER AS ENUM ('man', 'woman');
 CREATE TYPE PREFERRED_PARTNER AS ENUM ('man', 'woman', 'anyone');
-CREATE TYPE FAMILY_PLANS AS ENUM ('don''t want children', 'want children', 'open to children', 'not sure yet', 'prefer not to say');
+CREATE TYPE FAMILY_PLANS AS ENUM ('do not want children', 'want children', 'open to children', 'not sure yet', 'prefer not to say');
 
 CREATE TABLE profiles.profiles
 (
@@ -41,6 +41,8 @@ CREATE TABLE profiles.prompts
     question TEXT,
     content  TEXT,
     type     PROMPT_TYPE,
-    PRIMARY KEY (id),
-    FOREIGN KEY (user_id) REFERENCES profiles.profiles (user_id)
+    PRIMARY KEY (id)
 );
+
+ALTER TABLE profiles.prompts
+    ADD CONSTRAINT unique_prompt_pair UNIQUE (user_id, question, type);
