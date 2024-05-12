@@ -87,10 +87,25 @@ func (a *Application) UpdateFilePrompt(ctx context.Context, filePrompt domain.Fi
 	return res, err
 }
 
-func (a *Application) AddFilePrompt(ctx context.Context, filePrompt domain.FilePrompt) (*domain.Prompt, error) {
-	err := a.validate.Struct(filePrompt)
+func (a *Application) AddFilePrompt(ctx context.Context, filePrompt domain.FilePrompt) (prompt *domain.Prompt, err error) {
+	err = a.validate.Struct(filePrompt)
 	if err != nil {
 		return nil, fmt.Errorf("invalid file prompt: %w", err)
+	}
+	err = a.txManager.RunInTx(ctx, func(ctx context.Context) error {
+		prompt, err = a.addFilePrompt(ctx, filePrompt)
+		if err != nil {
+			return fmt.Errorf("failed to add file prompt: %w", err)
+		}
+		return nil
+	})
+	return prompt, err
+}
+
+func (a *Application) addFilePrompt(ctx context.Context, filePrompt domain.FilePrompt) (*domain.Prompt, error) {
+	_, err := a.repository.GetProfileByID(ctx, filePrompt.UserId)
+	if err != nil {
+		return nil, domain.ErrAddPromptsOnEmptyProfile
 	}
 	response, err := a.mediaClient.UploadFile(ctx, &media.UploadFileRequest{
 		ContentType: "image/png",
@@ -108,13 +123,10 @@ func (a *Application) AddFilePrompt(ctx context.Context, filePrompt domain.FileP
 		Position: filePrompt.Position,
 		Type:     filePrompt.Type,
 	}
-	err = a.txManager.RunInTx(ctx, func(ctx context.Context) error {
-		err := a.addPrompt(ctx, prompt)
-		if err != nil {
-			return fmt.Errorf("failed to add prompt: %w", err)
-		}
-		return nil
-	})
+	err = a.addPrompt(ctx, prompt)
+	if err != nil {
+		return nil, err
+	}
 	return &prompt, err
 }
 
@@ -130,9 +142,9 @@ func (a *Application) GetFullProfile(ctx context.Context, userId uuid.UUID) (pro
 }
 
 func (a *Application) getFullProfile(ctx context.Context, userId uuid.UUID) (*domain.FullProfile, error) {
-	profile, err := a.repository.GetProfileByID(ctx, userId)
+	profile, err := a.getProfile(ctx, userId)
 	if err != nil {
-		return nil, fmt.Errorf("get profile: %w", err)
+		return nil, err
 	}
 
 	prompts, err := a.repository.GetPromptsByUser(ctx, profile.UserId)
@@ -163,20 +175,27 @@ func (a *Application) getRandomProfilePreferredByUser(ctx context.Context, userI
 		return nil, fmt.Errorf("get profile: %w", err)
 	}
 
-	recommendedProfile, err := a.repository.GetRandomProfileBySexAndPreference(
+	p, err := a.repository.GetRandomProfileBySexAndPreference(
 		ctx, profile.UserId, domain.Preference(profile.PreferredPartner), profile.Sex,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("get recommedation: %w", err)
 	}
+	if p.MainPicPromptID != nil {
+		prompt, err := a.repository.GetPromptByID(ctx, *p.MainPicPromptID)
+		if err != nil {
+			return nil, fmt.Errorf("get prompt for profile pic: %w", err)
+		}
+		p.MainPicLink = prompt.Content
+	}
 
-	prompts, err := a.repository.GetPromptsByUser(ctx, recommendedProfile.UserId)
+	prompts, err := a.repository.GetPromptsByUser(ctx, p.UserId)
 	if err != nil {
 		return nil, fmt.Errorf("get prompt for recommended profile: %w", err)
 	}
 
 	return &domain.FullProfile{
-		Profile: *recommendedProfile,
+		Profile: *p,
 		Prompts: prompts,
 	}, nil
 }
@@ -219,10 +238,28 @@ func (a *Application) createProfile(ctx context.Context, profile *domain.Profile
 	return profile, nil
 }
 
-func (a *Application) GetProfile(ctx context.Context, userId uuid.UUID) (*domain.Profile, error) {
+func (a *Application) GetProfile(ctx context.Context, userId uuid.UUID) (profile *domain.Profile, err error) {
+	err = a.txManager.RunInTx(ctx, func(ctx context.Context) error {
+		profile, err = a.getProfile(ctx, userId)
+		if err != nil {
+			return fmt.Errorf("failed to get profile: %w", err)
+		}
+		return nil
+	})
+	return profile, err
+}
+
+func (a *Application) getProfile(ctx context.Context, userId uuid.UUID) (*domain.Profile, error) {
 	p, err := a.repository.GetProfileByID(ctx, userId)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get profile: %w", err)
+	}
+	if p.MainPicPromptID != nil {
+		prompt, err := a.repository.GetPromptByID(ctx, *p.MainPicPromptID)
+		if err != nil {
+			return nil, fmt.Errorf("get prompt for profile pic: %w", err)
+		}
+		p.MainPicLink = prompt.Content
 	}
 
 	return p, nil
@@ -253,9 +290,17 @@ func (a *Application) updateProfile(ctx context.Context, profile domain.Profile)
 		return nil, domain.ErrForbidden
 	}
 
+	profile.MainPicPromptID = p.MainPicPromptID
 	p, err = a.repository.UpdateProfile(ctx, profile)
 	if err != nil {
 		return nil, err
+	}
+	if p.MainPicPromptID != nil {
+		prompt, err := a.repository.GetPromptByID(ctx, *p.MainPicPromptID)
+		if err != nil {
+			return nil, fmt.Errorf("get prompt for profile pic: %w", err)
+		}
+		p.MainPicLink = prompt.Content
 	}
 
 	return p, nil
@@ -289,6 +334,10 @@ func (a *Application) AddPrompts(ctx context.Context, prompts []domain.Prompt) (
 }
 
 func (a *Application) addPrompts(ctx context.Context, prompts []domain.Prompt) ([]domain.Prompt, error) {
+	_, err := a.repository.GetProfileByID(ctx, prompts[0].UserId)
+	if err != nil {
+		return nil, domain.ErrAddPromptsOnEmptyProfile
+	}
 	for i := range prompts {
 		prompts[i].ID = domain.NewUID()
 		err := a.addPrompt(ctx, prompts[i])
@@ -314,6 +363,21 @@ func (a *Application) addPrompt(ctx context.Context, prompt domain.Prompt) error
 	err = a.repository.CreatePrompt(ctx, prompt)
 	if err != nil {
 		return fmt.Errorf("create prompt: %w", err)
+	}
+
+	var profile *domain.Profile
+	if prompt.Type == domain.Image {
+		profile, err = a.repository.GetProfileByID(ctx, prompt.UserId)
+		if err != nil {
+			return fmt.Errorf("get profile: %w", err)
+		}
+		if profile.MainPicPromptID == nil {
+			profile.MainPicPromptID = &prompt.ID
+			_, err = a.repository.UpdateProfile(ctx, *profile)
+			if err != nil {
+				return fmt.Errorf("update profile: %w", err)
+			}
+		}
 	}
 	return nil
 }

@@ -27,6 +27,7 @@ func ProfileSuccessResponse(p *domain.Profile) *ProfileResponse {
 			Location:         p.Location,
 			DrinksAlcohol:    p.DrinksAlcohol,
 			Smokes:           p.Smokes,
+			ProfilePicLink:   p.MainPicLink,
 		},
 	}
 }
@@ -49,6 +50,7 @@ func GetMultipleProfilesSuccessResponse(profiles []domain.Profile) *MultipleProf
 				Location:         p.Location,
 				DrinksAlcohol:    p.DrinksAlcohol,
 				Smokes:           p.Smokes,
+				ProfilePicLink:   p.MainPicLink,
 			},
 		}
 	}
@@ -110,6 +112,7 @@ func FullProfileSuccessResponse(fp *domain.FullProfile) *FullProfileResponse {
 			Location:         profile.Location,
 			DrinksAlcohol:    profile.DrinksAlcohol,
 			Smokes:           profile.Smokes,
+			ProfilePicLink:   profile.MainPicLink,
 		},
 		Prompts: res,
 	}
@@ -150,6 +153,8 @@ func GetErrorCode(err error) codes.Code {
 		return codes.NotFound
 	case errors.Is(err, domain.ErrNotUnique) || errors.Is(err, domain.ErrIDAlreadyExists):
 		return codes.AlreadyExists
+	case errors.Is(err, domain.ErrAddPromptsOnEmptyProfile):
+		return codes.FailedPrecondition
 	case errors.Is(err, domain.ErrForbidden):
 		return codes.PermissionDenied
 	}
