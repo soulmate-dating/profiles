@@ -295,6 +295,13 @@ func (a *Application) updateProfile(ctx context.Context, profile domain.Profile)
 	if err != nil {
 		return nil, err
 	}
+	if p.MainPicPromptID != nil {
+		prompt, err := a.repository.GetPromptByID(ctx, *p.MainPicPromptID)
+		if err != nil {
+			return nil, fmt.Errorf("get prompt for profile pic: %w", err)
+		}
+		p.MainPicLink = prompt.Content
+	}
 
 	return p, nil
 }
