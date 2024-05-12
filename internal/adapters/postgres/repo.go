@@ -89,7 +89,7 @@ func (r *Repo) UpdateProfile(ctx context.Context, p domain.Profile) (*domain.Pro
 		p.UserId, p.FirstName, p.LastName, p.BirthDate,
 		p.Sex, p.PreferredPartner, p.Intention, p.Height,
 		p.HasChildren, p.FamilyPlans, p.Location,
-		p.DrinksAlcohol, p.Smokes,
+		p.DrinksAlcohol, p.Smokes, p.MainPicPromptID,
 	)
 	rows, err := r.pool.GetTx(ctx).Query(ctx, updateProfileQuery, args...)
 	if err != nil {

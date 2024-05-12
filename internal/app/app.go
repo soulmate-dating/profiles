@@ -290,6 +290,7 @@ func (a *Application) updateProfile(ctx context.Context, profile domain.Profile)
 		return nil, domain.ErrForbidden
 	}
 
+	profile.MainPicPromptID = p.MainPicPromptID
 	p, err = a.repository.UpdateProfile(ctx, profile)
 	if err != nil {
 		return nil, err
