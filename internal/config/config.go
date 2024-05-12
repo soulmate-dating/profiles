@@ -24,7 +24,7 @@ type API struct {
 
 type Media struct {
 	Address   string `env:"MEDIA_ADDRESS" envDefault:"localhost:8081"`
-	TLSEnable bool   `env:"MEDIA_TLS_ENABLE" envDefault:"false"`
+	EnableTLS bool   `env:"MEDIA_ENABLE_TLS" envDefault:"false"`
 }
 
 type Config struct {
@@ -35,7 +35,7 @@ type Config struct {
 
 func Load() (Config, error) {
 	var cfg Config
-	err := env.Parse(cfg)
+	err := env.Parse(&cfg)
 	if err != nil {
 		return Config{}, fmt.Errorf("parsing config: %w", err)
 	}
