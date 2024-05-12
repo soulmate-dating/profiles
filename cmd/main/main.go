@@ -2,52 +2,19 @@ package main
 
 import (
 	"context"
-	"github.com/soulmate-dating/profiles/internal/adapters/postgres"
-	"github.com/soulmate-dating/profiles/internal/app"
-	"github.com/soulmate-dating/profiles/internal/graceful"
-	grpcSvc "github.com/soulmate-dating/profiles/internal/ports/grpc"
-	"golang.org/x/sync/errgroup"
-	"google.golang.org/grpc"
-	"os"
-
 	"log"
-	"net"
-)
 
-const (
-	grpcPort = ":8080"
+	"github.com/soulmate-dating/profiles/internal/app"
+	"github.com/soulmate-dating/profiles/internal/config"
+	"github.com/soulmate-dating/profiles/internal/ports/grpc"
 )
 
 func main() {
 	ctx := context.Background()
-
-	dbConn, err := postgres.Connect()
+	cfg, err := config.Load()
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Fatalf("failed to load config: %v", err)
 	}
-	appSvc := app.NewApp(dbConn)
-
-	lis, err := net.Listen("tcp", grpcPort)
-	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
-	}
-
-	svc := grpcSvc.NewService(appSvc)
-	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(
-		grpcSvc.UnaryLoggerInterceptor,
-		grpcSvc.UnaryRecoveryInterceptor(),
-	))
-	grpcSvc.RegisterProfileServiceServer(grpcServer, svc)
-
-	eg, ctx := errgroup.WithContext(ctx)
-
-	sigQuit := make(chan os.Signal, 1)
-	eg.Go(graceful.CaptureSignal(ctx, sigQuit))
-	// run grpc server
-	eg.Go(grpcSvc.RunGRPCServerGracefully(ctx, lis, grpcServer))
-
-	if err := eg.Wait(); err != nil {
-		log.Printf("gracefully shutting down the servers: %s\n", err.Error())
-	}
-	log.Println("servers were successfully shutdown")
+	appSvc := app.New(ctx, cfg)
+	grpc.Run(ctx, cfg, appSvc)
 }

@@ -4,6 +4,17 @@ services:
 
   profiles:
     container_name: profiles
+    env_file:
+      - .\cmd\main\.env
+    environment:
+        - POSTGRES_HOST=postgres
+        - POSTGRES_PORT=5432
+        - POSTGRES_USER=glimpse
+        - POSTGRES_PASSWORD=password
+        - POSTGRES_DB=glimpse
+        - POSTGRES_SSL_MODE=disable
+        - API_ADDRESS=profiles:8080
+        - MEDIA_ADDRESS=media:8082
     build:
       context: .
       dockerfile: Dockerfile
@@ -28,7 +39,7 @@ services:
       - "5432:5432"
     volumes:
       - /data/postgres
-      - .\internal\adapters\postgres\migrations\tables.up.sql:/docker-entrypoint-initdb.d/init.sql
+      - .\internal\adapters\postgres\migrations\00001_tables.up.sql:/docker-entrypoint-initdb.d/init.sql
     restart: unless-stopped
     networks:
       - postgres

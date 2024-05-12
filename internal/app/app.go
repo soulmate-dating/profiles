@@ -3,15 +3,13 @@ package app
 import (
 	"context"
 	"fmt"
-	"log"
-
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgxpool"
-
 	"github.com/soulmate-dating/profiles/internal/adapters/postgres"
 	"github.com/soulmate-dating/profiles/internal/app/clients/media"
+	"github.com/soulmate-dating/profiles/internal/config"
 	"github.com/soulmate-dating/profiles/internal/domain"
+	"log"
 )
 
 type App interface {
@@ -367,11 +365,26 @@ func (a *Application) UpdatePromptsPositions(ctx context.Context, prompts []doma
 	return prompts, nil
 }
 
-func NewApp(conn *pgxpool.Pool) App {
+func New(ctx context.Context, cfg config.Config) App {
+	conn, err := postgres.Connect(ctx, postgres.Config{
+		Host:              cfg.Postgres.Host,
+		Port:              cfg.Postgres.Port,
+		User:              cfg.Postgres.User,
+		Password:          cfg.Postgres.Password,
+		DBName:            cfg.Postgres.Database,
+		SSLMode:           cfg.Postgres.SSLMode,
+		ConnectionTimeout: cfg.Postgres.ConnectionTimeout,
+	})
+	if err != nil {
+		log.Fatalf("failed to connect to db: %v", err)
+	}
 	pool := postgres.NewPool(conn)
 	repo := postgres.NewRepo(pool)
 
-	mediaClient, err := media.NewServiceClient()
+	mediaClient, err := media.NewServiceClient(media.Config{
+		Address:   cfg.Media.Address,
+		EnableTLS: cfg.Media.EnableTLS,
+	})
 	if err != nil {
 		log.Fatalf("could not connect to media service: %s", err.Error())
 	}
