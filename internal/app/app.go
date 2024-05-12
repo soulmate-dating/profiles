@@ -175,20 +175,27 @@ func (a *Application) getRandomProfilePreferredByUser(ctx context.Context, userI
 		return nil, fmt.Errorf("get profile: %w", err)
 	}
 
-	recommendedProfile, err := a.repository.GetRandomProfileBySexAndPreference(
+	p, err := a.repository.GetRandomProfileBySexAndPreference(
 		ctx, profile.UserId, domain.Preference(profile.PreferredPartner), profile.Sex,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("get recommedation: %w", err)
 	}
+	if p.MainPicPromptID != nil {
+		prompt, err := a.repository.GetPromptByID(ctx, *p.MainPicPromptID)
+		if err != nil {
+			return nil, fmt.Errorf("get prompt for profile pic: %w", err)
+		}
+		p.MainPicLink = prompt.Content
+	}
 
-	prompts, err := a.repository.GetPromptsByUser(ctx, recommendedProfile.UserId)
+	prompts, err := a.repository.GetPromptsByUser(ctx, p.UserId)
 	if err != nil {
 		return nil, fmt.Errorf("get prompt for recommended profile: %w", err)
 	}
 
 	return &domain.FullProfile{
-		Profile: *recommendedProfile,
+		Profile: *p,
 		Prompts: prompts,
 	}, nil
 }
