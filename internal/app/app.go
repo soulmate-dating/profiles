@@ -3,13 +3,16 @@ package app
 import (
 	"context"
 	"fmt"
+	"github.com/samber/lo"
+	"log"
+	"sort"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/soulmate-dating/profiles/internal/adapters/postgres"
 	"github.com/soulmate-dating/profiles/internal/app/clients/media"
 	"github.com/soulmate-dating/profiles/internal/config"
 	"github.com/soulmate-dating/profiles/internal/domain"
-	"log"
 )
 
 type App interface {
@@ -42,7 +45,8 @@ type Repository interface {
 	GetPromptByUserQuestionAndType(ctx context.Context, prompt domain.Prompt) (*domain.Prompt, error)
 	CreatePrompt(ctx context.Context, prompt domain.Prompt) error
 	UpdatePromptContent(ctx context.Context, prompt domain.Prompt) (*domain.Prompt, error)
-	UpdatePromptsPositions(ctx context.Context, prompts []domain.Prompt) ([]domain.Prompt, error)
+	UpdatePromptsPositions(ctx context.Context, prompts []domain.Prompt) error
+	GetPromptsByIDs(ctx context.Context, ids []uuid.UUID) ([]domain.Prompt, error)
 }
 
 type TransactionManager interface {
@@ -200,13 +204,52 @@ func (a *Application) getRandomProfilePreferredByUser(ctx context.Context, userI
 	}, nil
 }
 
-func (a *Application) GetMultipleProfiles(ctx context.Context, ids []uuid.UUID) ([]domain.Profile, error) {
-	p, err := a.repository.GetMultipleProfilesByIDs(ctx, ids)
+func (a *Application) GetMultipleProfiles(ctx context.Context, ids []uuid.UUID) (profiles []domain.Profile, err error) {
+	err = a.txManager.RunInTx(ctx, func(ctx context.Context) error {
+		profiles, err = a.getMultipleProfiles(ctx, ids)
+		if err != nil {
+			return fmt.Errorf("failed to get profiles: %w", err)
+		}
+		return nil
+	})
+
+	return profiles, err
+}
+
+func (a *Application) getMultipleProfiles(ctx context.Context, ids []uuid.UUID) ([]domain.Profile, error) {
+	profiles, err := a.repository.GetMultipleProfilesByIDs(ctx, ids)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get profiles by id: %w", err)
 	}
 
-	return p, nil
+	profilesWithPics := lo.Filter(profiles, func(p domain.Profile, _ int) bool {
+		return p.MainPicPromptID != nil
+	})
+	promptIds := lo.Map(profilesWithPics, func(p domain.Profile, _ int) uuid.UUID {
+		return *p.MainPicPromptID
+	})
+	if len(promptIds) == 0 {
+		return profiles, nil
+	}
+
+	prompts, err := a.repository.GetPromptsByIDs(ctx, promptIds)
+	if err != nil {
+		return nil, fmt.Errorf("get prompts for profile pics: %w", err)
+	}
+	promptIdsMap := lo.KeyBy(prompts, func(p domain.Prompt) uuid.UUID {
+		return p.ID
+	})
+
+	for i, p := range profiles {
+		if p.MainPicPromptID == nil {
+			continue
+		}
+		if prompt, ok := promptIdsMap[*p.MainPicPromptID]; ok {
+			profiles[i].MainPicLink = prompt.Content
+		}
+	}
+
+	return profiles, nil
 }
 
 func (a *Application) CreateProfile(ctx context.Context, profile *domain.Profile) (res *domain.Profile, err error) {
@@ -420,13 +463,46 @@ func (a *Application) updatePrompt(ctx context.Context, prompt domain.Prompt) (*
 	return p, nil
 }
 
-func (a *Application) UpdatePromptsPositions(ctx context.Context, prompts []domain.Prompt) ([]domain.Prompt, error) {
-	prompts, err := a.repository.UpdatePromptsPositions(ctx, prompts)
+func (a *Application) UpdatePromptsPositions(ctx context.Context, prompts []domain.Prompt) (ps []domain.Prompt, err error) {
+	err = a.txManager.RunInTx(ctx, func(ctx context.Context) error {
+		ps, err = a.updatePromptsPositions(ctx, prompts)
+		if err != nil {
+			return fmt.Errorf("failed to update prompts positions: %w", err)
+		}
+		return nil
+	})
+
+	return ps, err
+}
+
+func (a *Application) updatePromptsPositions(ctx context.Context, prompts []domain.Prompt) ([]domain.Prompt, error) {
+	ids := lo.Map(prompts, func(p domain.Prompt, _ int) uuid.UUID {
+		return p.ID
+	})
+	dbPrompts, err := a.repository.GetPromptsByIDs(ctx, ids)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get prompts by ids: %w", err)
+	}
+	if len(dbPrompts) < len(prompts) {
+		return nil, fmt.Errorf("prompts ids %w", domain.ErrNotFound)
+	}
+	promptMap := lo.KeyBy(prompts, func(p domain.Prompt) uuid.UUID {
+		return p.ID
+	})
+	lo.ForEach(dbPrompts, func(p domain.Prompt, i int) {
+		dbPrompts[i].Position = promptMap[p.ID].Position
+	})
+
+	err = a.repository.UpdatePromptsPositions(ctx, dbPrompts)
+	if err != nil {
+		return nil, fmt.Errorf("update prompts positions: %w", err)
 	}
 
-	return prompts, nil
+	sort.Slice(dbPrompts, func(i, j int) bool {
+		return dbPrompts[i].Position < dbPrompts[j].Position
+	})
+
+	return dbPrompts, nil
 }
 
 func New(ctx context.Context, cfg config.Config) App {

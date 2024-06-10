@@ -177,7 +177,27 @@ func (r *Repo) GetPromptByUserQuestionAndType(ctx context.Context, prompt domain
 	return &prompt, nil
 }
 
-func (r *Repo) UpdatePromptsPositions(ctx context.Context, prompts []domain.Prompt) ([]domain.Prompt, error) {
-	//TODO implement me
-	panic("implement me")
+func (r *Repo) UpdatePromptsPositions(ctx context.Context, prompts []domain.Prompt) error {
+	batch := NewPromptBatch(prompts)
+	var args []any
+	args = append(args, batch.IDs, batch.Positions)
+
+	_, err := r.pool.GetTx(ctx).Exec(ctx, updatePromptsPositionQuery, args...)
+	if err != nil {
+		return fmt.Errorf("update prompts position: %w", err)
+	}
+
+	return nil
+}
+
+func (r *Repo) GetPromptsByIDs(ctx context.Context, ids []uuid.UUID) ([]domain.Prompt, error) {
+	rows, err := r.pool.GetTx(ctx).Query(ctx, getPromptsByIDsQuery, ids)
+	if err != nil {
+		return nil, fmt.Errorf("get prompts by id: %w", err)
+	}
+	prompts, err := pgx.CollectRows(rows, r.mapPrompts)
+	if err != nil {
+		return nil, fmt.Errorf("map prompts: %w", err)
+	}
+	return prompts, nil
 }
