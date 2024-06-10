@@ -19,4 +19,10 @@ const (
 	getPromptByIDQuery                      = `SELECT * FROM profiles.prompts WHERE id = $1`
 	getPromptByUserQuestionAndTypeQuery     = `SELECT * FROM profiles.prompts WHERE user_id = $1 AND question = $2 AND type = $3`
 	updatePromptQuery                       = `UPDATE profiles.prompts SET question = $2, content = $3, position = $4 WHERE id = $1 RETURNING *`
+	getPromptsByIDsQuery                    = `SELECT * FROM profiles.prompts WHERE id = ANY($1)`
+	updatePromptsPositionQuery              = `
+		UPDATE profiles.prompts
+		SET position = updated.new_position
+		FROM (SELECT unnest($1::uuid[]) as new_id, unnest($2::int[]) as new_position) as updated
+		WHERE id = updated.new_id`
 )

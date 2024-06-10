@@ -171,8 +171,14 @@ func (s *ProfileService) UpdatePromptsPositions(ctx context.Context, request *Up
 	if err != nil {
 		return nil, status.Error(GetErrorCode(err), err.Error())
 	}
+
 	for i, p := range request.GetPromptPositions() {
+		promptId, err := uuid.Parse(p.GetId())
+		if err != nil {
+			return nil, status.Error(GetErrorCode(err), err.Error())
+		}
 		prompts[i] = domain.Prompt{
+			ID:       promptId,
 			UserId:   userId,
 			Position: p.GetPosition(),
 		}
