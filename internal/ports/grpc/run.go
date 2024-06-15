@@ -14,6 +14,8 @@ import (
 	"github.com/soulmate-dating/profiles/internal/graceful"
 )
 
+const MB = 1024 * 1024
+
 func Run(ctx context.Context, cfg config.Config, app app.App) {
 	lis, err := net.Listen(cfg.API.Network, cfg.API.Address)
 	if err != nil {
@@ -21,10 +23,14 @@ func Run(ctx context.Context, cfg config.Config, app app.App) {
 	}
 
 	svc := NewService(app)
-	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(
-		UnaryLoggerInterceptor,
-		UnaryRecoveryInterceptor(),
-	))
+	grpcServer := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(
+			UnaryLoggerInterceptor,
+			UnaryRecoveryInterceptor(),
+		),
+		grpc.MaxRecvMsgSize(cfg.API.MaxReceiveSize*MB),
+		grpc.MaxSendMsgSize(cfg.API.MaxSendSize*MB),
+	)
 	RegisterProfileServiceServer(grpcServer, svc)
 	eg, ctx := errgroup.WithContext(ctx)
 	sigQuit := make(chan os.Signal, 1)
