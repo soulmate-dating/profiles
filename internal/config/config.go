@@ -18,8 +18,10 @@ type Postgres struct {
 }
 
 type API struct {
-	Network string `env:"API_NETWORK" envDefault:"tcp"`
-	Address string `env:"API_ADDRESS,required" example:"localhost:8080"`
+	Network        string `env:"API_NETWORK" envDefault:"tcp"`
+	Address        string `env:"API_ADDRESS,required" example:"localhost:8080"`
+	MaxReceiveSize int    `env:"API_MAX_RECEIVE_SIZE" envDefault:"20"`
+	MaxSendSize    int    `env:"API_MAX_SEND_SIZE" envDefault:"20"`
 }
 
 type Media struct {
