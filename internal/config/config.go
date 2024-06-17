@@ -29,10 +29,15 @@ type Media struct {
 	EnableTLS bool   `env:"MEDIA_ENABLE_TLS" envDefault:"false"`
 }
 
+type Metrics struct {
+	Address string `env:"METRICS_ADDRESS,required" example:"localhost:8084"`
+}
+
 type Config struct {
 	Postgres Postgres
 	API      API
 	Media    Media
+	Metrics  Metrics
 }
 
 func Load() (Config, error) {
