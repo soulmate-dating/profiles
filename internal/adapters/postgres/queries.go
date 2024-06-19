@@ -25,4 +25,5 @@ const (
 		SET position = updated.new_position
 		FROM (SELECT unnest($1::uuid[]) as new_id, unnest($2::int[]) as new_position) as updated
 		WHERE id = updated.new_id`
+	deletePromptQuery = `DELETE FROM profiles.prompts WHERE id = $1`
 )

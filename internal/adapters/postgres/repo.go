@@ -201,3 +201,10 @@ func (r *Repo) GetPromptsByIDs(ctx context.Context, ids []uuid.UUID) ([]domain.P
 	}
 	return prompts, nil
 }
+
+func (r *Repo) DeletePrompt(ctx context.Context, id uuid.UUID) error {
+	if _, err := r.pool.GetTx(ctx).Exec(ctx, deletePromptQuery, id); err != nil {
+		return fmt.Errorf("delete prompt: %w", err)
+	}
+	return nil
+}
