@@ -17,6 +17,7 @@ service ProfileService {
   rpc UpdateFilePrompt(UpdateFilePromptRequest) returns (SinglePromptResponse) {}
   rpc UpdatePrompt(UpdatePromptRequest) returns (SinglePromptResponse) {}
   rpc UpdatePromptsPositions(UpdatePromptsPositionsRequest) returns (PromptsResponse) {}
+  rpc DeletePrompt(DeletePromptRequest) returns (SinglePromptResponse) {}
 }
 
 message PersonalInfo {
@@ -129,4 +130,9 @@ message UpdateFilePromptRequest {
   bytes content = 4;
   string type = 5;
   int32 position = 6;
+}
+
+message DeletePromptRequest {
+  string id = 1;
+  string user_id = 2;
 }

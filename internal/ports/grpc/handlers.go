@@ -232,3 +232,19 @@ func (s *ProfileService) UpdateFilePrompt(ctx context.Context, request *UpdateFi
 	}
 	return SinglePromptSuccessResponse(prompt), nil
 }
+
+func (s *ProfileService) DeletePrompt(ctx context.Context, request *DeletePromptRequest) (*SinglePromptResponse, error) {
+	userId, err := uuid.Parse(request.GetUserId())
+	if err != nil {
+		return nil, status.Error(GetErrorCode(err), err.Error())
+	}
+	promptId, err := uuid.Parse(request.GetId())
+	if err != nil {
+		return nil, status.Error(GetErrorCode(err), err.Error())
+	}
+	prompt, err := s.app.DeletePrompt(ctx, userId, promptId)
+	if err != nil {
+		return nil, status.Error(GetErrorCode(err), err.Error())
+	}
+	return SinglePromptSuccessResponse(prompt), nil
+}

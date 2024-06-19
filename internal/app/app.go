@@ -29,6 +29,7 @@ type App interface {
 	GetMultipleProfiles(ctx context.Context, ids []uuid.UUID) ([]domain.Profile, error)
 	AddFilePrompt(ctx context.Context, prompt domain.FilePrompt) (*domain.Prompt, error)
 	UpdateFilePrompt(ctx context.Context, prompt domain.FilePrompt) (*domain.Prompt, error)
+	DeletePrompt(ctx context.Context, userId uuid.UUID, promptId uuid.UUID) (*domain.Prompt, error)
 }
 
 type Repository interface {
@@ -47,6 +48,7 @@ type Repository interface {
 	UpdatePromptContent(ctx context.Context, prompt domain.Prompt) (*domain.Prompt, error)
 	UpdatePromptsPositions(ctx context.Context, prompts []domain.Prompt) error
 	GetPromptsByIDs(ctx context.Context, ids []uuid.UUID) ([]domain.Prompt, error)
+	DeletePrompt(ctx context.Context, id uuid.UUID) error
 }
 
 type TransactionManager interface {
@@ -58,6 +60,42 @@ type Application struct {
 	txManager   TransactionManager
 	repository  Repository
 	mediaClient media.MediaServiceClient
+}
+
+func (a *Application) DeletePrompt(ctx context.Context, userId uuid.UUID, promptId uuid.UUID) (p *domain.Prompt, err error) {
+	err = a.txManager.RunInTx(ctx, func(ctx context.Context) error {
+		p, err = a.deletePrompt(ctx, userId, promptId)
+		if err != nil {
+			return fmt.Errorf("failed to delete prompt: %w", err)
+		}
+		return nil
+	})
+	return p, err
+}
+
+func (a *Application) deletePrompt(ctx context.Context, userId uuid.UUID, promptId uuid.UUID) (*domain.Prompt, error) {
+	p, err := a.repository.GetProfileByID(ctx, userId)
+	if err != nil {
+		return nil, fmt.Errorf("get profile: %w", err)
+	}
+	if p.MainPicPromptID != nil && *p.MainPicPromptID == promptId {
+		return nil, domain.ErrCannotDeleteProfilePic
+	}
+
+	prompt, err := a.repository.GetPromptByID(ctx, promptId)
+	if err != nil {
+		return nil, fmt.Errorf("get prompt: %w", err)
+	}
+	if prompt.UserId.String() != userId.String() {
+		return nil, domain.ErrForbidden
+	}
+
+	err = a.repository.DeletePrompt(ctx, promptId)
+	if err != nil {
+		return nil, fmt.Errorf("delete prompt: %w", err)
+	}
+
+	return prompt, nil
 }
 
 func (a *Application) UpdateFilePrompt(ctx context.Context, filePrompt domain.FilePrompt) (res *domain.Prompt, err error) {

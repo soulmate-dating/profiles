@@ -3,7 +3,7 @@ version: '3.9'
 services:
 
   profiles:
-    container_name: profiles
+    container_name: profiles_1
     env_file:
       - .\cmd\main\.env
     environment:
@@ -15,6 +15,7 @@ services:
         - POSTGRES_SSL_MODE=disable
         - API_ADDRESS=profiles:8080
         - MEDIA_ADDRESS=media:8082
+        - METRICS_ADDRESS=profiles:8081
     build:
       context: .
       dockerfile: Dockerfile
@@ -27,7 +28,7 @@ services:
       - postgres
 
   postgres:
-    container_name: postgres
+    container_name: postgres_1
     image: postgres:latest
     environment:
       POSTGRES_DATABASE: glimpse
