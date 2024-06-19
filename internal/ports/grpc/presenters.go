@@ -157,6 +157,8 @@ func GetErrorCode(err error) codes.Code {
 		return codes.FailedPrecondition
 	case errors.Is(err, domain.ErrForbidden):
 		return codes.PermissionDenied
+	case errors.Is(err, domain.ErrCannotDeleteProfilePic):
+		return codes.FailedPrecondition
 	}
 	return codes.Internal
 }

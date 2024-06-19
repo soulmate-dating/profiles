@@ -1201,6 +1201,61 @@ func (x *UpdateFilePromptRequest) GetPosition() int32 {
 	return 0
 }
 
+type DeletePromptRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Id     string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	UserId string `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+}
+
+func (x *DeletePromptRequest) Reset() {
+	*x = DeletePromptRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_internal_ports_grpc_profiles_proto_msgTypes[19]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *DeletePromptRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeletePromptRequest) ProtoMessage() {}
+
+func (x *DeletePromptRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_ports_grpc_profiles_proto_msgTypes[19]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeletePromptRequest.ProtoReflect.Descriptor instead.
+func (*DeletePromptRequest) Descriptor() ([]byte, []int) {
+	return file_internal_ports_grpc_profiles_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *DeletePromptRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *DeletePromptRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
 var File_internal_ports_grpc_profiles_proto protoreflect.FileDescriptor
 
 var file_internal_ports_grpc_profiles_proto_rawDesc = []byte{
@@ -1341,7 +1396,11 @@ var file_internal_ports_grpc_profiles_proto_rawDesc = []byte{
 	0x04, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x07, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x12, 0x12,
 	0x0a, 0x04, 0x74, 0x79, 0x70, 0x65, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x74, 0x79,
 	0x70, 0x65, 0x12, 0x1a, 0x0a, 0x08, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x06,
-	0x20, 0x01, 0x28, 0x05, 0x52, 0x08, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x32, 0x8a,
+	0x20, 0x01, 0x28, 0x05, 0x52, 0x08, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0x3e,
+	0x0a, 0x13, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x50, 0x72, 0x6f, 0x6d, 0x70, 0x74, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x02, 0x69, 0x64, 0x12, 0x17, 0x0a, 0x07, 0x75, 0x73, 0x65, 0x72, 0x5f, 0x69, 0x64,
+	0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x75, 0x73, 0x65, 0x72, 0x49, 0x64, 0x32, 0xdb,
 	0x08, 0x0a, 0x0e, 0x50, 0x72, 0x6f, 0x66, 0x69, 0x6c, 0x65, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63,
 	0x65, 0x12, 0x4c, 0x0a, 0x0d, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x50, 0x72, 0x6f, 0x66, 0x69,
 	0x6c, 0x65, 0x12, 0x1e, 0x2e, 0x70, 0x72, 0x6f, 0x66, 0x69, 0x6c, 0x65, 0x73, 0x2e, 0x43, 0x72,
@@ -1406,11 +1465,16 @@ var file_internal_ports_grpc_profiles_proto_rawDesc = []byte{
 	0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x72, 0x6f, 0x6d, 0x70, 0x74, 0x73, 0x50, 0x6f,
 	0x73, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x19,
 	0x2e, 0x70, 0x72, 0x6f, 0x66, 0x69, 0x6c, 0x65, 0x73, 0x2e, 0x50, 0x72, 0x6f, 0x6d, 0x70, 0x74,
-	0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x42, 0x39, 0x5a, 0x37, 0x67,
-	0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x73, 0x6f, 0x75, 0x6c, 0x6d, 0x61,
-	0x74, 0x65, 0x2d, 0x64, 0x61, 0x74, 0x69, 0x6e, 0x67, 0x2f, 0x70, 0x72, 0x6f, 0x66, 0x69, 0x6c,
-	0x65, 0x73, 0x2f, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x2f, 0x70, 0x6f, 0x72, 0x74,
-	0x73, 0x2f, 0x67, 0x72, 0x70, 0x63, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x4f, 0x0a, 0x0c, 0x44,
+	0x65, 0x6c, 0x65, 0x74, 0x65, 0x50, 0x72, 0x6f, 0x6d, 0x70, 0x74, 0x12, 0x1d, 0x2e, 0x70, 0x72,
+	0x6f, 0x66, 0x69, 0x6c, 0x65, 0x73, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x50, 0x72, 0x6f,
+	0x6d, 0x70, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1e, 0x2e, 0x70, 0x72, 0x6f,
+	0x66, 0x69, 0x6c, 0x65, 0x73, 0x2e, 0x53, 0x69, 0x6e, 0x67, 0x6c, 0x65, 0x50, 0x72, 0x6f, 0x6d,
+	0x70, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x42, 0x39, 0x5a, 0x37,
+	0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x73, 0x6f, 0x75, 0x6c, 0x6d,
+	0x61, 0x74, 0x65, 0x2d, 0x64, 0x61, 0x74, 0x69, 0x6e, 0x67, 0x2f, 0x70, 0x72, 0x6f, 0x66, 0x69,
+	0x6c, 0x65, 0x73, 0x2f, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x2f, 0x70, 0x6f, 0x72,
+	0x74, 0x73, 0x2f, 0x67, 0x72, 0x70, 0x63, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1425,7 +1489,7 @@ func file_internal_ports_grpc_profiles_proto_rawDescGZIP() []byte {
 	return file_internal_ports_grpc_profiles_proto_rawDescData
 }
 
-var file_internal_ports_grpc_profiles_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
+var file_internal_ports_grpc_profiles_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
 var file_internal_ports_grpc_profiles_proto_goTypes = []interface{}{
 	(*PersonalInfo)(nil),                           // 0: profiles.PersonalInfo
 	(*Prompt)(nil),                                 // 1: profiles.Prompt
@@ -1446,6 +1510,7 @@ var file_internal_ports_grpc_profiles_proto_goTypes = []interface{}{
 	(*FullProfileResponse)(nil),                    // 16: profiles.FullProfileResponse
 	(*AddFilePromptRequest)(nil),                   // 17: profiles.AddFilePromptRequest
 	(*UpdateFilePromptRequest)(nil),                // 18: profiles.UpdateFilePromptRequest
+	(*DeletePromptRequest)(nil),                    // 19: profiles.DeletePromptRequest
 }
 var file_internal_ports_grpc_profiles_proto_depIdxs = []int32{
 	0,  // 0: profiles.CreateProfileRequest.personal_info:type_name -> profiles.PersonalInfo
@@ -1471,20 +1536,22 @@ var file_internal_ports_grpc_profiles_proto_depIdxs = []int32{
 	18, // 20: profiles.ProfileService.UpdateFilePrompt:input_type -> profiles.UpdateFilePromptRequest
 	10, // 21: profiles.ProfileService.UpdatePrompt:input_type -> profiles.UpdatePromptRequest
 	12, // 22: profiles.ProfileService.UpdatePromptsPositions:input_type -> profiles.UpdatePromptsPositionsRequest
-	6,  // 23: profiles.ProfileService.CreateProfile:output_type -> profiles.ProfileResponse
-	6,  // 24: profiles.ProfileService.GetProfile:output_type -> profiles.ProfileResponse
-	6,  // 25: profiles.ProfileService.UpdateProfile:output_type -> profiles.ProfileResponse
-	14, // 26: profiles.ProfileService.GetMultipleProfiles:output_type -> profiles.MultipleProfilesResponse
-	16, // 27: profiles.ProfileService.GetRandomProfilePreferredByUser:output_type -> profiles.FullProfileResponse
-	16, // 28: profiles.ProfileService.GetFullProfile:output_type -> profiles.FullProfileResponse
-	9,  // 29: profiles.ProfileService.GetPrompts:output_type -> profiles.PromptsResponse
-	9,  // 30: profiles.ProfileService.AddPrompts:output_type -> profiles.PromptsResponse
-	11, // 31: profiles.ProfileService.AddFilePrompt:output_type -> profiles.SinglePromptResponse
-	11, // 32: profiles.ProfileService.UpdateFilePrompt:output_type -> profiles.SinglePromptResponse
-	11, // 33: profiles.ProfileService.UpdatePrompt:output_type -> profiles.SinglePromptResponse
-	9,  // 34: profiles.ProfileService.UpdatePromptsPositions:output_type -> profiles.PromptsResponse
-	23, // [23:35] is the sub-list for method output_type
-	11, // [11:23] is the sub-list for method input_type
+	19, // 23: profiles.ProfileService.DeletePrompt:input_type -> profiles.DeletePromptRequest
+	6,  // 24: profiles.ProfileService.CreateProfile:output_type -> profiles.ProfileResponse
+	6,  // 25: profiles.ProfileService.GetProfile:output_type -> profiles.ProfileResponse
+	6,  // 26: profiles.ProfileService.UpdateProfile:output_type -> profiles.ProfileResponse
+	14, // 27: profiles.ProfileService.GetMultipleProfiles:output_type -> profiles.MultipleProfilesResponse
+	16, // 28: profiles.ProfileService.GetRandomProfilePreferredByUser:output_type -> profiles.FullProfileResponse
+	16, // 29: profiles.ProfileService.GetFullProfile:output_type -> profiles.FullProfileResponse
+	9,  // 30: profiles.ProfileService.GetPrompts:output_type -> profiles.PromptsResponse
+	9,  // 31: profiles.ProfileService.AddPrompts:output_type -> profiles.PromptsResponse
+	11, // 32: profiles.ProfileService.AddFilePrompt:output_type -> profiles.SinglePromptResponse
+	11, // 33: profiles.ProfileService.UpdateFilePrompt:output_type -> profiles.SinglePromptResponse
+	11, // 34: profiles.ProfileService.UpdatePrompt:output_type -> profiles.SinglePromptResponse
+	9,  // 35: profiles.ProfileService.UpdatePromptsPositions:output_type -> profiles.PromptsResponse
+	11, // 36: profiles.ProfileService.DeletePrompt:output_type -> profiles.SinglePromptResponse
+	24, // [24:37] is the sub-list for method output_type
+	11, // [11:24] is the sub-list for method input_type
 	11, // [11:11] is the sub-list for extension type_name
 	11, // [11:11] is the sub-list for extension extendee
 	0,  // [0:11] is the sub-list for field type_name
@@ -1724,6 +1791,18 @@ func file_internal_ports_grpc_profiles_proto_init() {
 				return nil
 			}
 		}
+		file_internal_ports_grpc_profiles_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DeletePromptRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -1731,7 +1810,7 @@ func file_internal_ports_grpc_profiles_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_internal_ports_grpc_profiles_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   19,
+			NumMessages:   20,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

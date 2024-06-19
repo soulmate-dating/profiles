@@ -34,6 +34,7 @@ type ProfileServiceClient interface {
 	UpdateFilePrompt(ctx context.Context, in *UpdateFilePromptRequest, opts ...grpc.CallOption) (*SinglePromptResponse, error)
 	UpdatePrompt(ctx context.Context, in *UpdatePromptRequest, opts ...grpc.CallOption) (*SinglePromptResponse, error)
 	UpdatePromptsPositions(ctx context.Context, in *UpdatePromptsPositionsRequest, opts ...grpc.CallOption) (*PromptsResponse, error)
+	DeletePrompt(ctx context.Context, in *DeletePromptRequest, opts ...grpc.CallOption) (*SinglePromptResponse, error)
 }
 
 type profileServiceClient struct {
@@ -152,6 +153,15 @@ func (c *profileServiceClient) UpdatePromptsPositions(ctx context.Context, in *U
 	return out, nil
 }
 
+func (c *profileServiceClient) DeletePrompt(ctx context.Context, in *DeletePromptRequest, opts ...grpc.CallOption) (*SinglePromptResponse, error) {
+	out := new(SinglePromptResponse)
+	err := c.cc.Invoke(ctx, "/profiles.ProfileService/DeletePrompt", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ProfileServiceServer is the server API for ProfileService service.
 // All implementations must embed UnimplementedProfileServiceServer
 // for forward compatibility
@@ -168,6 +178,7 @@ type ProfileServiceServer interface {
 	UpdateFilePrompt(context.Context, *UpdateFilePromptRequest) (*SinglePromptResponse, error)
 	UpdatePrompt(context.Context, *UpdatePromptRequest) (*SinglePromptResponse, error)
 	UpdatePromptsPositions(context.Context, *UpdatePromptsPositionsRequest) (*PromptsResponse, error)
+	DeletePrompt(context.Context, *DeletePromptRequest) (*SinglePromptResponse, error)
 	mustEmbedUnimplementedProfileServiceServer()
 }
 
@@ -210,6 +221,9 @@ func (UnimplementedProfileServiceServer) UpdatePrompt(context.Context, *UpdatePr
 }
 func (UnimplementedProfileServiceServer) UpdatePromptsPositions(context.Context, *UpdatePromptsPositionsRequest) (*PromptsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdatePromptsPositions not implemented")
+}
+func (UnimplementedProfileServiceServer) DeletePrompt(context.Context, *DeletePromptRequest) (*SinglePromptResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeletePrompt not implemented")
 }
 func (UnimplementedProfileServiceServer) mustEmbedUnimplementedProfileServiceServer() {}
 
@@ -440,6 +454,24 @@ func _ProfileService_UpdatePromptsPositions_Handler(srv interface{}, ctx context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ProfileService_DeletePrompt_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeletePromptRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProfileServiceServer).DeletePrompt(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/profiles.ProfileService/DeletePrompt",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProfileServiceServer).DeletePrompt(ctx, req.(*DeletePromptRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ProfileService_ServiceDesc is the grpc.ServiceDesc for ProfileService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -494,6 +526,10 @@ var ProfileService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdatePromptsPositions",
 			Handler:    _ProfileService_UpdatePromptsPositions_Handler,
+		},
+		{
+			MethodName: "DeletePrompt",
+			Handler:    _ProfileService_DeletePrompt_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
